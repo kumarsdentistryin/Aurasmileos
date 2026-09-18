@@ -1,0 +1,135 @@
+@import url('https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+@import './styles/motion.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --font-display: 'Sora', 'Plus Jakarta Sans', system-ui, sans-serif;
+  --font-sans: 'Plus Jakarta Sans', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+
+  /* Unified brand — Deep Surgical Teal (marketing + /app) */
+  --color-navy-primary: #0F172A;
+  --color-navy-light: #134E5E;
+  --color-brand: #0F766E;
+  --color-brand-hover: #115E59;
+  /* Alias: older chairside components reference aegean */
+  --color-aegean: var(--color-brand);
+  --color-aegean-hover: var(--color-brand-hover);
+  --color-sage: #166534;
+  --color-sage-muted: #0F766E;
+  --color-canvas: #F8FAFC;
+  --color-canvas-deep: #F1F5F9;
+  --color-surface: #FFFFFF;
+  --color-ink-primary: #0F172A;
+  --color-ink-secondary: #475569;
+  --color-ink-muted: #64748B;
+  --color-border: #E2E8F0;
+  --color-border-dark: #CBD5E1;
+
+  /* FDI — muted natural */
+  --status-sound: #FAF9F5;
+  --status-sound-outline: #94A3B8;
+  --status-caries: #B91C1C;
+  --status-composite: #3B6998;
+  --status-amalgam: #475569;
+  --status-crown: #B45309;
+  --status-rct: #166534;
+  --status-extraction: #9F1239;
+  --status-missing: #64748B;
+  --status-implant: #5B4B8A;
+  --status-fracture: #C2410C;
+
+  /* Alert Colors */
+  --alert-danger-bg: #FEF2F2;
+  --alert-danger-text: #991B1B;
+  --alert-danger-border: #FCA5A5;
+
+  --alert-warning-bg: #FFFBEB;
+  --alert-warning-text: #92400E;
+  --alert-warning-border: #FCD34D;
+
+  --alert-info-bg: #EFF6FF;
+  --alert-info-text: #1E40AF;
+  --alert-info-border: #93C5FD;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: var(--color-canvas);
+  color: var(--color-ink-primary);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.font-display {
+  font-family: var(--font-display);
+}
+
+.font-mono {
+  font-family: var(--font-mono);
+}
+
+/* Custom Scrollbar for Clinical Panels */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #F1F5F9;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #CBD5E1;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94A3B8;
+}
+
+/* Surface elevation (static; motion lives in styles/motion.css) */
+.surface-card {
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  box-shadow: 0 1px 3px 0 rgba(15, 23, 42, 0.06);
+}
+
+/* Print: hide chrome, keep only the preview sheet */
+@media print {
+  body * {
+    visibility: hidden !important;
+  }
+
+  .print-sheet,
+  .print-sheet * {
+    visibility: visible !important;
+  }
+
+  .print-sheet {
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 12mm !important;
+    border: none !important;
+    box-shadow: none !important;
+    background: white !important;
+  }
+
+  .print-hidden {
+    display: none !important;
+  }
+}

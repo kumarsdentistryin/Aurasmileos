@@ -1,0 +1,12 @@
+-- AuraSmile OS — link a Supabase Auth user to the seeded Indiranagar clinic
+-- 1) Run all migrations in order (Dashboard → SQL).
+-- 2) Create a user in Authentication → Users (or via app Sign up).
+-- 3) Replace YOUR_AUTH_USER_UUID below, then run this script.
+
+-- insert into public.clinic_members (clinic_id, user_id, display_name, role)
+-- select c.id, 'YOUR_AUTH_USER_UUID'::uuid, 'Dr. Vikram Rao, MDS', 'DOCTOR'
+-- from public.clinics c
+-- where c.branch_code = 'BLR-01'
+-- on conflict (clinic_id, user_id) do update
+--   set display_name = excluded.display_name,
+--       role = excluded.role;

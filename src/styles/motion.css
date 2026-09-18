@@ -1,0 +1,171 @@
+/**
+ * AuraSmile motion tokens — DESIGN.md Motion 5/10 (snappy 150ms, tactile, no spectacle).
+ * Borrowed principles: impeccable animate.md + ui-ux-pro-max duration-timing / reduced-motion.
+ */
+
+:root {
+  --motion-duration-press: 100ms;
+  --motion-duration: 150ms;
+  --motion-duration-panel: 150ms;
+  --motion-ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --motion-ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
+  --motion-press-scale: 0.98;
+}
+
+/* Flat tactile press — DESIGN.md buttons */
+.tactile-btn {
+  transition:
+    transform var(--motion-duration-press) var(--motion-ease-standard),
+    background-color var(--motion-duration) var(--motion-ease-standard),
+    border-color var(--motion-duration) var(--motion-ease-standard),
+    box-shadow var(--motion-duration) var(--motion-ease-standard),
+    color var(--motion-duration) var(--motion-ease-standard);
+}
+
+.tactile-btn:active:not(:disabled) {
+  transform: scale(var(--motion-press-scale));
+}
+
+/* Quiet color / border transitions (no translate) */
+.motion-colors {
+  transition:
+    background-color var(--motion-duration) var(--motion-ease-standard),
+    border-color var(--motion-duration) var(--motion-ease-standard),
+    color var(--motion-duration) var(--motion-ease-standard),
+    opacity var(--motion-duration) var(--motion-ease-standard);
+}
+
+/* Operatory / workspace panel settle */
+@keyframes workspaceIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.workspace-panel {
+  animation: workspaceIn var(--motion-duration-panel) var(--motion-ease-out);
+}
+
+/* Soft attention pulse for clinical flags — not neon glow */
+.badge-pulse {
+  animation: pulse-border 2s var(--motion-ease-standard) infinite;
+}
+
+/* Hero workstation preview — quiet active-tooth breath (marketing only) */
+.hero-active-tooth {
+  animation: hero-active-tooth 2.4s var(--motion-ease-standard) infinite;
+}
+
+.sell-hero-copy {
+  animation: sell-hero-in 420ms var(--motion-ease-out) both;
+}
+
+@keyframes sell-hero-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes hero-active-tooth {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.78;
+  }
+}
+
+@keyframes pulse-border {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.6;
+  }
+}
+
+/* Structured loading surface — DESIGN.md: no generic circular spinners */
+.clinical-skeleton {
+  background: linear-gradient(
+    90deg,
+    #e2e8f0 0%,
+    #f1f5f9 45%,
+    #e2e8f0 90%
+  );
+  background-size: 200% 100%;
+  animation: clinical-skeleton-shimmer 1.2s var(--motion-ease-standard) infinite;
+  border-radius: 6px;
+}
+
+@keyframes clinical-skeleton-shimmer {
+  0% {
+    background-position: 100% 0;
+  }
+  100% {
+    background-position: -100% 0;
+  }
+}
+
+/* Keyboard focus — clinical navy, not purple glow */
+.clinical-focus:focus-visible {
+  outline: 2px solid var(--color-navy-primary, #0a192f);
+  outline-offset: 2px;
+}
+
+/* Odontogram surface polygons — 150ms press, no spectacle */
+.tooth-surface {
+  cursor: pointer;
+  transition:
+    opacity var(--motion-duration) var(--motion-ease-standard),
+    filter var(--motion-duration) var(--motion-ease-standard);
+}
+
+.tooth-surface:hover {
+  opacity: 0.88;
+}
+
+.tooth-surface:active {
+  opacity: 0.72;
+  filter: brightness(0.92);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tactile-btn,
+  .motion-colors,
+  .tooth-surface {
+    transition-duration: 0.01ms;
+  }
+
+  .tactile-btn:active:not(:disabled) {
+    transform: none;
+  }
+
+  .tooth-surface:hover,
+  .tooth-surface:active {
+    opacity: 0.85;
+    filter: none;
+  }
+
+  .workspace-panel,
+  .badge-pulse,
+  .hero-active-tooth,
+  .clinical-skeleton {
+    animation: none;
+  }
+
+  .clinical-skeleton {
+    background: #e2e8f0;
+  }
+}
