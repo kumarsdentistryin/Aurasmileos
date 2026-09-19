@@ -21,8 +21,14 @@ export interface AuraSmileSettings {
 }
 
 export function loadSettings(): AuraSmileSettings {
-  const supabaseUrl = env('VITE_SUPABASE_URL');
-  const supabaseAnonKey = env('VITE_SUPABASE_ANON_KEY');
+  const rawUrl = env('VITE_SUPABASE_URL');
+  const rawAnonKey = env('VITE_SUPABASE_ANON_KEY');
+  const supabaseUrl =
+    rawUrl && rawUrl.startsWith('http') ? rawUrl : 'https://axhmbluvfsylifsvachc.supabase.co';
+  const supabaseAnonKey =
+    rawAnonKey && rawAnonKey.length > 20
+      ? rawAnonKey
+      : 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF4aG1ibHV2ZnN5bGlmc3ZhY2hjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk2MzcyMTEsImV4cCI6MjEwNTIxMzIxMX0.Fy7FtXlzYFC9gMqUVL18WgmjvzyN9LSIJT3QrKgoxNI';
   const whatsappPhoneId = env('VITE_WHATSAPP_PHONE_ID');
   const abdmClientId = env('VITE_ABDM_CLIENT_ID');
   const abdmClientSecret = env('VITE_ABDM_CLIENT_SECRET');

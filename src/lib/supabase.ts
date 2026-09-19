@@ -6,8 +6,18 @@ import { createClient, SupabaseClient } from '@supabase/supabase-js';
  * Until keys exist, `isSupabaseConfigured()` is false and the app stays on mock data.
  */
 
-const url = import.meta.env.VITE_SUPABASE_URL as string | undefined;
-const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined;
+const DEFAULT_SUPABASE_URL = 'https://axhmbluvfsylifsvachc.supabase.co';
+const DEFAULT_SUPABASE_ANON_KEY =
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF4aG1ibHV2ZnN5bGlmc3ZhY2hjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk2MzcyMTEsImV4cCI6MjEwNTIxMzIxMX0.Fy7FtXlzYFC9gMqUVL18WgmjvzyN9LSIJT3QrKgoxNI';
+
+const rawUrl = (import.meta.env.VITE_SUPABASE_URL as string | undefined)?.trim();
+const rawAnonKey = (import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined)?.trim();
+
+const url = rawUrl && rawUrl.startsWith('http') ? rawUrl : DEFAULT_SUPABASE_URL;
+const anonKey =
+  rawAnonKey && rawAnonKey.length > 20 && !rawAnonKey.includes('YOUR_')
+    ? rawAnonKey
+    : DEFAULT_SUPABASE_ANON_KEY;
 
 export function isSupabaseConfigured(): boolean {
   return Boolean(url && anonKey && url.startsWith('http') && anonKey.length > 20);
