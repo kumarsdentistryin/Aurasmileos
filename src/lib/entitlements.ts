@@ -64,19 +64,16 @@ export function canWriteClinicData(e: ClinicEntitlement, now = new Date()): bool
   return isClinicEntitled(e, now);
 }
 
-/** Max operatory chairs allowed for the clinic plan (null = contact/custom). */
-export function maxChairsForPlan(plan: ClinicPlan | string | null | undefined): number {
-  if (plan === 'starter') return 1;
-  if (plan === 'pro') return 3;
-  // free_trial pilots may configure up to Multi-Chair band
+/** Max operatory chairs allowed (all clinics receive access to all 3 operatories). */
+export function maxChairsForPlan(_plan?: ClinicPlan | string | null | undefined): number {
   return 3;
 }
 
 export function clampChairCount(
   requested: number,
-  plan: ClinicPlan | string | null | undefined
+  plan?: ClinicPlan | string | null | undefined
 ): number {
   const max = maxChairsForPlan(plan);
-  const n = Number.isFinite(requested) ? Math.floor(requested) : 1;
+  const n = Number.isFinite(requested) ? Math.floor(requested) : 3;
   return Math.min(max, Math.max(1, n));
 }

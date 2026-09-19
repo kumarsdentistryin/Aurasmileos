@@ -32,7 +32,7 @@ export const InventoryManager: React.FC<InventoryManagerProps> = ({ clinicDbId =
 
   const hydrate = () => {
     setInventoryClinicScope(clinicDbId);
-    const next = loadInventoryStock({ seedDemoIfEmpty: !isLive });
+    const next = loadInventoryStock({ seedDemoIfEmpty: true });
     setMaterials(next);
     setLedger(loadInventoryLedger());
     setAutoDeductions(listRecentAutoDeductions(10));
@@ -50,6 +50,11 @@ export const InventoryManager: React.FC<InventoryManagerProps> = ({ clinicDbId =
 
   useEffect(() => {
     hydrate();
+    const handleUpdate = () => hydrate();
+    window.addEventListener('aurasmile:inventory_updated', handleUpdate);
+    return () => {
+      window.removeEventListener('aurasmile:inventory_updated', handleUpdate);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [clinicDbId]);
 

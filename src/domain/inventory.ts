@@ -142,10 +142,46 @@ export interface BoughtVsSpentSummary {
 /** Map chart/plan procedure ids → inventory recipe presets. */
 export function procedureIdToPreset(procedureId: string): ClinicalProcedurePreset | null {
   const id = procedureId.toLowerCase();
-  if (id.includes('rct') || id.includes('ssrct')) return 'MOLAR_RCT';
-  if (id.includes('composite') || id.includes('inlay')) return 'CLASS_II_COMPOSITE';
-  if (id.includes('extract')) return 'SURGICAL_EXTRACTION';
-  if (id.includes('scaling') || id.includes('curettage')) return 'SCALING_PROPHYLAXIS';
+  if (
+    id.includes('rct') ||
+    id.includes('root canal') ||
+    id.includes('endo') ||
+    id.includes('pulp') ||
+    id.includes('ssrct') ||
+    id.includes('obturation')
+  ) {
+    return 'MOLAR_RCT';
+  }
+  if (
+    id.includes('composite') ||
+    id.includes('filling') ||
+    id.includes('restor') ||
+    id.includes('inlay') ||
+    id.includes('class i') ||
+    id.includes('class ii') ||
+    id.includes('cavity')
+  ) {
+    return 'CLASS_II_COMPOSITE';
+  }
+  if (
+    id.includes('extract') ||
+    id.includes('surg') ||
+    id.includes('implant') ||
+    id.includes('impaction') ||
+    id.includes('exodont')
+  ) {
+    return 'SURGICAL_EXTRACTION';
+  }
+  if (
+    id.includes('scaling') ||
+    id.includes('polish') ||
+    id.includes('prophy') ||
+    id.includes('curettage') ||
+    id.includes('clean') ||
+    id.includes('hygiene')
+  ) {
+    return 'SCALING_PROPHYLAXIS';
+  }
   return null;
 }
 

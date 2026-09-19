@@ -13,10 +13,10 @@ export const SPECIALTY_OPTIONS: {
   shortLabel: string;
   defaultRole: 'DOCTOR' | 'FRONT_DESK' | 'OWNER';
 }[] = [
-  { value: 'PEDIATRIC', label: 'Pediatric Dentistry (Pedo)', shortLabel: 'Pedo', defaultRole: 'DOCTOR' },
-  { value: 'ORAL_SURGERY', label: 'Oral Surgery', shortLabel: 'Oral', defaultRole: 'DOCTOR' },
-  { value: 'MICRO_ENDO', label: 'Micro Endodontics', shortLabel: 'Micro', defaultRole: 'DOCTOR' },
   { value: 'GENERAL', label: 'General Dentistry', shortLabel: 'General', defaultRole: 'DOCTOR' },
+  { value: 'MICRO_ENDO', label: 'Micro Endodontics', shortLabel: 'Micro', defaultRole: 'DOCTOR' },
+  { value: 'ORAL_SURGERY', label: 'Oral Surgery', shortLabel: 'Oral', defaultRole: 'DOCTOR' },
+  { value: 'PEDIATRIC', label: 'Pediatric Dentistry (Pedo)', shortLabel: 'Pedo', defaultRole: 'DOCTOR' },
   { value: 'FRONT_DESK', label: 'Front Desk / Reception', shortLabel: 'Desk', defaultRole: 'FRONT_DESK' },
 ];
 

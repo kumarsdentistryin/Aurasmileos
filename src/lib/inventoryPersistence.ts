@@ -47,13 +47,12 @@ function writeLocalJson(key: string, value: unknown): void {
 
 /**
  * Load stock for the active clinic scope.
- * Live clinics: never auto-seed mock SKUs (empty until purchase / Load starter).
- * Demo scope: seed MOCK pack once if empty (sandbox UX).
+ * Always auto-seeds standard dental consumables if uninitialized so clinics have active stock.
  */
 export function loadInventoryStock(opts?: { seedDemoIfEmpty?: boolean }): DentalMaterial[] {
-  const seed = opts?.seedDemoIfEmpty ?? activeClinicScope === 'demo';
+  const seed = opts?.seedDemoIfEmpty ?? true;
   const saved = readLocalJson<DentalMaterial[] | null>(stockKey(), null);
-  if (saved?.length) return saved;
+  if (saved && saved.length > 0) return saved;
   if (!seed) return [];
   const seeded = MOCK_INVENTORY_MATERIALS.map((m) => ({ ...m }));
   writeLocalJson(stockKey(), seeded);
@@ -62,6 +61,9 @@ export function loadInventoryStock(opts?: { seedDemoIfEmpty?: boolean }): Dental
 
 export function saveInventoryStock(materials: DentalMaterial[]): void {
   writeLocalJson(stockKey(), materials);
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent('aurasmile:inventory_updated'));
+  }
 }
 
 export function loadInventoryLedger(): StockLedgerEntry[] {
@@ -71,6 +73,9 @@ export function loadInventoryLedger(): StockLedgerEntry[] {
 export function appendInventoryLedger(entry: StockLedgerEntry): StockLedgerEntry[] {
   const next = [entry, ...loadInventoryLedger()].slice(0, 300);
   writeLocalJson(ledgerKey(), next);
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent('aurasmile:inventory_updated'));
+  }
   return next;
 }
 
@@ -85,7 +90,7 @@ export function applyCaseSpendFromProcedure(input: {
   }
   const preset = procedureIdToPreset(input.procedureTitle);
   if (!preset) return { ok: false, spentPaise: 0, label: input.procedureTitle };
-  const materials = loadInventoryStock({ seedDemoIfEmpty: false });
+  const materials = loadInventoryStock({ seedDemoIfEmpty: true });
   if (!materials.length) {
     return { ok: false, spentPaise: 0, label: input.procedureTitle };
   }
@@ -128,6 +133,9 @@ export type AutoDeductionEntry = {
 function appendAutoDeduction(entry: AutoDeductionEntry): void {
   const prev = readLocalJson<AutoDeductionEntry[]>(autoDedKey(), []);
   writeLocalJson(autoDedKey(), [entry, ...prev].slice(0, 50));
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent('aurasmile:inventory_updated'));
+  }
 }
 
 export function listRecentAutoDeductions(limit = 10): AutoDeductionEntry[] {
@@ -143,9 +151,10 @@ export function deductInventoryByItemNames(
     setInventoryClinicScope(meta.clinicDbId);
   }
   if (!deductions.length) return { ok: false, summary: '' };
-  const materials = loadInventoryStock({ seedDemoIfEmpty: false });
+  const materials = loadInventoryStock({ seedDemoIfEmpty: true });
   if (!materials.length) return { ok: false, summary: '' };
   let changed = false;
+  let totalCostPaise = 0;
   const applied: { itemName: string; quantity: number }[] = [];
   const next = materials.map((m) => {
     const hit = deductions.find(
@@ -155,10 +164,12 @@ export function deductInventoryByItemNames(
     );
     if (!hit) return m;
     changed = true;
-    applied.push({ itemName: m.name, quantity: hit.quantity });
+    const qty = Math.ceil(hit.quantity);
+    applied.push({ itemName: m.name, quantity: qty });
+    totalCostPaise += m.unitCostPaise * qty;
     return {
       ...m,
-      currentStock: Math.max(0, m.currentStock - Math.ceil(hit.quantity)),
+      currentStock: Math.max(0, m.currentStock - qty),
     };
   });
   if (!changed) return { ok: false, summary: '' };
@@ -169,7 +180,7 @@ export function deductInventoryByItemNames(
     type: 'CASE_SPEND',
     label,
     quantity: applied.reduce((n, i) => n + i.quantity, 0),
-    amountPaise: 0,
+    amountPaise: totalCostPaise,
     atIso: new Date().toISOString(),
     doctorName: meta?.patientName,
   });

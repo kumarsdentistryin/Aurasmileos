@@ -85,12 +85,13 @@ describe('entitlements', () => {
     ).toBe(false);
   });
 
-  it('clamps chairs by plan band', () => {
-    expect(maxChairsForPlan('starter')).toBe(1);
+  it('allows full 3-chair operatory access across plans', () => {
+    expect(maxChairsForPlan('starter')).toBe(3);
     expect(maxChairsForPlan('pro')).toBe(3);
     expect(maxChairsForPlan('free_trial')).toBe(3);
-    expect(clampChairCount(5, 'starter')).toBe(1);
+    expect(clampChairCount(5, 'starter')).toBe(3);
     expect(clampChairCount(0, 'pro')).toBe(1);
     expect(clampChairCount(2, 'pro')).toBe(2);
+    expect(clampChairCount(3, 'starter')).toBe(3);
   });
 });

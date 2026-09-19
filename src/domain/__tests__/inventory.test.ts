@@ -135,5 +135,9 @@ describe('inventory auto-deduction', () => {
     expect(summary.spentPaise).toBe(spend.totalDeductedCostPaise);
     expect(summary.netPaise).toBe(buy!.amountPaise - spend.totalDeductedCostPaise);
     expect(procedureIdToPreset('ssrct-crown')).toBe('MOLAR_RCT');
+    expect(procedureIdToPreset('Single sitting root canal treatment')).toBe('MOLAR_RCT');
+    expect(procedureIdToPreset('Composite filling (#16)')).toBe('CLASS_II_COMPOSITE');
+    expect(procedureIdToPreset('Surgical extraction of impacted tooth')).toBe('SURGICAL_EXTRACTION');
+    expect(procedureIdToPreset('Full mouth scaling & polishing')).toBe('SCALING_PROPHYLAXIS');
   });
 });
