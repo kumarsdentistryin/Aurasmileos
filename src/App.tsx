@@ -60,8 +60,8 @@ import {
 } from './lib/doctorScope';
 import {
   HomeQueueAppointment,
-  PractoHomeDashboard,
-} from './components/Home/PractoHomeDashboard';
+  AuraSmileHomeDashboard,
+} from './components/Home/AuraSmileHomeDashboard';
 import { TreatmentPlanPad } from './components/TreatmentPlan/TreatmentPlanPad';
 import { TreatmentPlanLine, createPlanLineFromMacro } from './domain/treatmentPlan';
 import { listAppointmentsForClinicToday, upsertAppointmentsBatch } from './lib/appointmentRepository';
@@ -1013,7 +1013,7 @@ export const WorkstationApp: React.FC = () => {
                 </div>
               </div>
             )}
-          <PractoHomeDashboard
+          <AuraSmileHomeDashboard
             clinicBranchLabel={clinicBranchLabel}
             clinicBrandName={branding.legalName}
             clinicDbId={liveClinicId}

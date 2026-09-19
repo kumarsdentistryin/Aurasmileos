@@ -175,7 +175,7 @@ const STATUS_STYLES: Record<
   },
 };
 
-interface PractoHomeDashboardProps {
+export interface AuraSmileHomeDashboardProps {
   clinicBranchLabel: string;
   clinicBrandName?: string;
   /** Live clinic id for integration emits (optional) */
@@ -258,7 +258,7 @@ function digitsOnly(phone: string): string {
   return phone.replace(/[^0-9]/g, '');
 }
 
-export const PractoHomeDashboard: React.FC<PractoHomeDashboardProps> = ({
+export const AuraSmileHomeDashboard: React.FC<AuraSmileHomeDashboardProps> = ({
   clinicBranchLabel,
   clinicBrandName = 'Clinic',
   clinicDbId = null,
@@ -1581,3 +1581,7 @@ export const PractoHomeDashboard: React.FC<PractoHomeDashboardProps> = ({
     </div>
   );
 };
+
+export const PractoHomeDashboard = AuraSmileHomeDashboard;
+export type PractoHomeDashboardProps = AuraSmileHomeDashboardProps;
+

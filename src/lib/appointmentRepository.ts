@@ -1,7 +1,7 @@
 import {
   HomeQueueAppointment,
   QueueAppointmentStatus,
-} from '../components/Home/PractoHomeDashboard';
+} from '../components/Home/AuraSmileHomeDashboard';
 import { emitAppointmentBooked } from './integrations/emit';
 import { DbAppointment, getSupabase, isSupabaseConfigured } from './supabase';
 
