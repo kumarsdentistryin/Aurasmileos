@@ -187,14 +187,14 @@ export const Navbar: React.FC<NavbarProps> = ({
             type="button"
             onClick={onOpenSwitcher}
             className="tactile-btn inline-flex items-center gap-2 h-9 pl-2.5 pr-2 rounded-lg border border-slate-200 bg-slate-50 hover:bg-slate-100 motion-colors"
-            title="Switch staff / branch / chair"
+            title="Switch Doctor / Profile"
           >
             <span className="hidden sm:flex flex-col items-start leading-tight min-w-0">
               <span className="text-xs font-semibold text-slate-800 truncate max-w-[130px]">
                 {isDesk ? 'Front desk' : doctorShort}
               </span>
-              <span className="text-[10px] text-slate-500 truncate max-w-[130px]">
-                {isDesk ? branchShort : session.chair.label}
+              <span className="text-[10px] text-teal-700 font-medium truncate max-w-[130px]">
+                {isDesk ? 'Reception' : session.doctor.memberRole === 'OWNER' ? 'Clinic Owner' : (session.doctor.specialty || 'Dentist')}
               </span>
             </span>
             <ChevronDown className="w-3.5 h-3.5 text-slate-400" />

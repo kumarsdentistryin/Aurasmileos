@@ -5,10 +5,12 @@ import {
   Clock,
   FlaskConical,
   IndianRupee,
+  PlayCircle,
   Plus,
+  Receipt,
   Stethoscope,
   X,
-  Armchair,
+  Pill,
 } from 'lucide-react';
 import { formatPaiseToInr } from '../../domain/financials';
 import { WhatsAppIcon } from '../icons/WhatsAppIcon';
@@ -156,7 +158,7 @@ const STATUS_STYLES: Record<
   { label: string; className: string }
 > = {
   IN_CHAIR: {
-    label: 'In Chair',
+    label: 'In Treatment',
     className: 'bg-emerald-50 text-emerald-800 border-emerald-200',
   },
   WAITING_IN_LOBBY: {
@@ -164,11 +166,11 @@ const STATUS_STYLES: Record<
     className: 'bg-amber-50 text-amber-900 border-amber-200',
   },
   CONFIRMED: {
-    label: 'Confirmed',
+    label: 'Scheduled',
     className: 'bg-sky-50 text-sky-800 border-sky-200',
   },
   COMPLETED: {
-    label: 'Completed',
+    label: 'Completed & Billed',
     className: 'bg-slate-100 text-slate-600 border-slate-200',
   },
 };
@@ -215,6 +217,10 @@ interface PractoHomeDashboardProps {
   }) => string;
   /** Dentist-only: opens clinical Treat workspace */
   onCallToChair: (patientId: string) => void;
+  /** Sovereign navigation to billing with patient pre-selected */
+  onOpenBilling?: (patientId: string) => void;
+  /** Sovereign navigation to prescriptions */
+  onOpenPrescription?: (patientId: string) => void;
   /** Soft-lock — hide/disable walk-in create when pilot expired */
   walkInDisabled?: boolean;
 }
@@ -226,13 +232,13 @@ function buildStatusWhatsApp(
 ): string {
   const first = appt.patientName.split(/\s+/)[0] ?? appt.patientName;
   if (appt.status === 'WAITING_IN_LOBBY') {
-    return `Namaste ${first} ji,\n\nYou are checked in at ${clinicBrandName} (${appt.chairLabel} queue). We will call you to the chair shortly.\n\n— Front Desk`;
+    return `Namaste ${first} ji,\n\nYou are checked in at ${clinicBrandName}. We will attend to you shortly.\n\n— Front Desk`;
   }
   if (appt.status === 'IN_CHAIR') {
-    return `Namaste ${first} ji,\n\nYou are currently with ${appt.assignedDoctor} in ${appt.chairLabel}. Please ask the coordinator if you need anything for your attendant.\n\n— ${clinicBrandName} Operatory`;
+    return `Namaste ${first} ji,\n\nYou are currently with ${appt.assignedDoctor} at ${clinicBrandName}. Please let our team know if you need anything.\n\n— Care Team`;
   }
   if (appt.status === 'COMPLETED') {
-    return `Namaste ${first} ji,\n\nThank you for visiting ${clinicBrandName} today (${appt.chiefComplaint}). Post-care instructions are available on WhatsApp — reply if you need anything.\n\n— Care Team`;
+    return `Namaste ${first} ji,\n\nThank you for visiting ${clinicBrandName} today (${appt.chiefComplaint}). Post-care instructions and digital receipts are on WhatsApp — reply if you need anything.\n\n— Care Team`;
   }
   return buildAppointmentReminderMessage({
     patientFirstName: first,
@@ -267,6 +273,8 @@ export const PractoHomeDashboard: React.FC<PractoHomeDashboardProps> = ({
   onAppointmentsChange,
   onEnsurePatient,
   onCallToChair,
+  onOpenBilling,
+  onOpenPrescription,
   walkInDisabled = false,
 }) => {
   const [localQueue, setLocalQueue] = useState<HomeQueueAppointment[]>(INITIAL_QUEUE);
@@ -504,6 +512,71 @@ export const PractoHomeDashboard: React.FC<PractoHomeDashboardProps> = ({
       activeMemberId
     );
     onCallToChair(patientId);
+  };
+
+  const handleOpenChart = (appt: HomeQueueAppointment) => {
+    const chairLabel = appt.chairLabel || firstFreeChairLabel;
+    const patientId = applySeatToQueue(
+      appt,
+      activeDoctorName,
+      chairLabel,
+      activeMemberId
+    );
+    onCallToChair(patientId);
+  };
+
+  const handleCheckOutPatient = (appt: HomeQueueAppointment) => {
+    const nextQueue = queue.map((q) =>
+      q.id === appt.id ? { ...q, status: 'COMPLETED' as QueueAppointmentStatus } : q
+    );
+    setQueue(nextQueue);
+    const pid = appt.patientId || onEnsurePatient({
+      idHint: appt.patientId,
+      fullName: appt.patientName,
+      age: appt.age,
+      gender: appt.gender,
+      phone: appt.phone,
+      chiefComplaint: appt.chiefComplaint,
+      assignedDoctor: appt.assignedDoctor,
+      assignedMemberId: appt.assignedMemberId,
+      chairLabel: appt.chairLabel || firstFreeChairLabel,
+    });
+    setDispatchFlash(`Checked out ${appt.patientName.split(' ')[0]} · Opening billing`);
+    if (onOpenBilling) {
+      onOpenBilling(pid);
+    }
+  };
+
+  const handleOpenBillOnly = (appt: HomeQueueAppointment) => {
+    if (!onOpenBilling) return;
+    const pid = appt.patientId || onEnsurePatient({
+      idHint: appt.patientId,
+      fullName: appt.patientName,
+      age: appt.age,
+      gender: appt.gender,
+      phone: appt.phone,
+      chiefComplaint: appt.chiefComplaint,
+      assignedDoctor: appt.assignedDoctor,
+      assignedMemberId: appt.assignedMemberId,
+      chairLabel: appt.chairLabel || firstFreeChairLabel,
+    });
+    onOpenBilling(pid);
+  };
+
+  const handleOpenRx = (appt: HomeQueueAppointment) => {
+    if (!onOpenPrescription) return;
+    const pid = appt.patientId || onEnsurePatient({
+      idHint: appt.patientId,
+      fullName: appt.patientName,
+      age: appt.age,
+      gender: appt.gender,
+      phone: appt.phone,
+      chiefComplaint: appt.chiefComplaint,
+      assignedDoctor: appt.assignedDoctor,
+      assignedMemberId: appt.assignedMemberId,
+      chairLabel: appt.chairLabel || firstFreeChairLabel,
+    });
+    onOpenPrescription(pid);
   };
 
   const confirmDeskSeat = (e: React.FormEvent) => {
@@ -799,7 +872,7 @@ export const PractoHomeDashboard: React.FC<PractoHomeDashboardProps> = ({
         </div>
         <div className="bg-[var(--color-surface)] border border-slate-200 rounded-lg px-3 py-2.5">
           <div className="text-[11px] text-slate-500">
-            In chair <span className="ml-1 inline-block w-1.5 h-1.5 rounded-full bg-[var(--color-sage)] align-middle" />
+            In treatment <span className="ml-1 inline-block w-1.5 h-1.5 rounded-full bg-[var(--color-sage)] align-middle animate-pulse" />
           </div>
           <div className="text-lg font-bold text-slate-900 font-mono truncate">
             {counts.inChairPatient ? counts.inChairPatient.patientName.split(' ')[0] : '—'}
@@ -935,39 +1008,97 @@ export const PractoHomeDashboard: React.FC<PractoHomeDashboardProps> = ({
                       </div>
                       <p className="text-xs text-slate-700 mb-1.5">{appt.chiefComplaint}</p>
                       <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-slate-500">
-                        <span className="inline-flex items-center gap-1">
-                          <Stethoscope className="w-3 h-3" />
+                        <span className="inline-flex items-center gap-1 font-medium text-slate-700">
+                          <Stethoscope className="w-3 h-3 text-teal-600" />
                           {appt.assignedDoctor}
                         </span>
-                        <span className="inline-flex items-center gap-1">
-                          <Armchair className="w-3 h-3" />
-                          {appt.chairLabel}
-                        </span>
-                        <span className="font-mono text-emerald-700">
-                          {formatPaiseToInr(appt.expectedFeePaise, false)}
+                        <span className="font-mono text-emerald-700 font-semibold">
+                          Est. {formatPaiseToInr(appt.expectedFeePaise, false)}
                         </span>
                       </div>
                     </div>
 
                     <div className="flex items-center gap-1.5 shrink-0">
-                      {appt.status !== 'COMPLETED' && (
+                      {(appt.status === 'WAITING_IN_LOBBY' || appt.status === 'CONFIRMED') && (
                         <button
                           type="button"
                           onClick={() => handlePrimaryQueueAction(appt)}
-                          className="tactile-btn inline-flex items-center gap-2 text-sm font-bold px-4 py-3 rounded-lg bg-teal-600 text-white hover:bg-teal-700 transition-colors shadow-sm min-h-[48px]"
+                          className="tactile-btn inline-flex items-center gap-1.5 text-xs font-bold px-3.5 py-2.5 rounded-lg bg-[var(--color-brand)] text-white hover:bg-[var(--color-brand-hover)] transition-all shadow-xs"
                         >
-                          <CheckCircle2 className="w-4 h-4" />
-                          {isDesk ? 'Seat patient' : 'Start treatment'}
+                          <PlayCircle className="w-4 h-4" />
+                          {isDesk ? 'Seat Patient' : 'Start Treatment'}
                         </button>
                       )}
+
+                      {appt.status === 'IN_CHAIR' && (
+                        <div className="flex items-center gap-1.5">
+                          <button
+                            type="button"
+                            onClick={() => handleOpenChart(appt)}
+                            className="tactile-btn inline-flex items-center gap-1.5 text-xs font-bold px-3 py-2 rounded-lg bg-teal-50 border border-teal-200 text-teal-800 hover:bg-teal-100 transition-colors"
+                            title="Open dental odontogram chart"
+                          >
+                            <Stethoscope className="w-3.5 h-3.5 text-teal-600" />
+                            Teeth Chart
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleCheckOutPatient(appt)}
+                            className="tactile-btn inline-flex items-center gap-1.5 text-xs font-bold px-3 py-2 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 transition-colors shadow-xs"
+                            title="Complete treatment and issue bill"
+                          >
+                            <CheckCircle2 className="w-3.5 h-3.5" />
+                            Check Out & Bill
+                          </button>
+                          {onOpenPrescription && (
+                            <button
+                              type="button"
+                              onClick={() => handleOpenRx(appt)}
+                              className="tactile-btn inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1.5 rounded-md border border-teal-200 bg-teal-50 text-teal-700 hover:bg-teal-100"
+                              title="Write prescription (Rx)"
+                            >
+                              <Pill className="w-3.5 h-3.5 text-teal-600" />
+                              Rx
+                            </button>
+                          )}
+                        </div>
+                      )}
+
+                      {appt.status === 'COMPLETED' && (
+                        <div className="flex items-center gap-1.5">
+                          {onOpenBilling && (
+                            <button
+                              type="button"
+                              onClick={() => handleOpenBillOnly(appt)}
+                              className="tactile-btn inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1.5 rounded-md border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100"
+                              title="View receipt"
+                            >
+                              <Receipt className="w-3.5 h-3.5 text-slate-500" />
+                              Receipt
+                            </button>
+                          )}
+                          {onOpenPrescription && (
+                            <button
+                              type="button"
+                              onClick={() => handleOpenRx(appt)}
+                              className="tactile-btn inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1.5 rounded-md border border-teal-200 bg-teal-50 text-teal-700 hover:bg-teal-100"
+                              title="View prescription (Rx)"
+                            >
+                              <Pill className="w-3.5 h-3.5 text-teal-600" />
+                              Rx
+                            </button>
+                          )}
+                        </div>
+                      )}
+
                       <a
                         href={waUrl(appt.phone, buildStatusWhatsApp(appt, clinicBrandName, clinicBranchLabel))}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="tactile-btn inline-flex items-center justify-center w-9 h-9 rounded-md border border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 transition-colors"
-                        title="WhatsApp status update"
+                        className="tactile-btn inline-flex items-center justify-center w-8 h-8 rounded-lg border border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 transition-colors"
+                        title="Send WhatsApp update"
                       >
-                        <WhatsAppIcon className="w-4 h-4" />
+                        <WhatsAppIcon className="w-3.5 h-3.5" />
                       </a>
                     </div>
                   </div>
@@ -985,10 +1116,10 @@ export const PractoHomeDashboard: React.FC<PractoHomeDashboardProps> = ({
           )}
         </div>
 
-        {/* Chair Occupancy Radar */}
+        {/* Operatory Floor Activity */}
         <aside className="space-y-3 h-fit">
           <div className="bg-white border border-slate-200 rounded-lg p-3.5">
-            <h3 className="text-xs font-bold text-slate-800 mb-3">Chairs</h3>
+            <h3 className="text-xs font-bold text-slate-800 mb-3">Operatory Floor Activity</h3>
             <div className="space-y-2.5">
               {chairRadar.map((chair) => {
                 const busy = chair.status === 'BUSY';

@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Building2, Check, Armchair, Stethoscope, X, Info, KeyRound } from 'lucide-react';
+import { Building2, Check, Stethoscope, X, Info, KeyRound } from 'lucide-react';
 import {
   getAuthSessionEmail,
   listLiveMemberships,
@@ -321,7 +321,6 @@ export const DoctorAuthModal: React.FC<DoctorAuthModalProps> = ({
     });
   };
 
-  const showChairPicker = chairsForBranch.length > 1;
   const showDemoStaffPicker = !liveMode;
 
   return (
@@ -347,8 +346,8 @@ export const DoctorAuthModal: React.FC<DoctorAuthModalProps> = ({
               {liveMode
                 ? requirePasswordReentry
                   ? 'Re-enter your password to unlock this workstation'
-                  : 'Sign in with your clinic password, then pick seat and chair'
-                : 'Pick who is on this computer · which clinic · which chair'}
+                  : 'Sign in with your clinic credentials to enter workstation'
+                : 'Select doctor profile to enter clinical workstation'}
             </p>
           </div>
           <button
@@ -553,44 +552,13 @@ export const DoctorAuthModal: React.FC<DoctorAuthModalProps> = ({
             </div>
           </section>
 
-          {/* Single clinic — how many chairs */}
-          {clinicScale === 'SINGLE' && (
-            <section>
-              <h3 className="text-[11px] font-bold uppercase tracking-wide text-slate-500 mb-2">
-                How many chairs at this clinic?
-              </h3>
-              <div className="grid grid-cols-3 gap-2">
-                {([1, 2, 3] as const).map((n) => (
-                  <button
-                    key={n}
-                    type="button"
-                    onClick={() => {
-                      setSingleChairCount(n);
-                      setChairId(OPERATORY_CHAIRS[0].id);
-                    }}
-                    className={`tactile-btn p-3 rounded-lg border text-center transition-all ${
-                      singleChairCount === n
-                        ? 'bg-white border-teal-500 ring-2 ring-teal-500/25'
-                        : 'bg-white border-slate-200 hover:border-slate-300'
-                    }`}
-                  >
-                    <div className="text-sm font-bold text-slate-900">{n}</div>
-                    <div className="text-[10px] text-slate-500">
-                      chair{n === 1 ? '' : 's'}
-                    </div>
-                  </button>
-                ))}
-              </div>
-            </section>
-          )}
-
           {/* Branches — only when multi */}
           {clinicScale === 'MULTI' && (
             <section>
               <div className="flex items-center gap-1.5 mb-2">
                 <Building2 className="w-3.5 h-3.5 text-slate-500" />
                 <h3 className="text-[11px] font-bold uppercase tracking-wide text-slate-500">
-                  2. Which branch are you at today?
+                  Which branch are you at today?
                 </h3>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
@@ -610,9 +578,6 @@ export const DoctorAuthModal: React.FC<DoctorAuthModalProps> = ({
                       <div className="text-xs font-bold text-slate-900">{branch.name}</div>
                       <div className="text-[10px] font-mono text-teal-700 mt-0.5">{branch.code}</div>
                       <div className="text-[10px] text-slate-500 mt-1 leading-snug">{branch.cityLine}</div>
-                      <div className="text-[10px] font-semibold text-slate-600 mt-1.5">
-                        {branch.chairIds.length} chair{branch.chairIds.length === 1 ? '' : 's'}
-                      </div>
                     </button>
                   );
                 })}
@@ -620,45 +585,6 @@ export const DoctorAuthModal: React.FC<DoctorAuthModalProps> = ({
             </section>
           )}
             </>
-          )}
-
-          {/* Chairs — skip when only one */}
-          {(liveReady || showDemoStaffPicker) && (
-            showChairPicker ? (
-            <section>
-              <div className="flex items-center gap-1.5 mb-2">
-                <Armchair className="w-3.5 h-3.5 text-slate-500" />
-                <h3 className="text-[11px] font-bold uppercase tracking-wide text-slate-500">
-                  {liveMode ? 'Which chair are you on?' : clinicScale === 'MULTI' ? '3. Which chair are you treating on?' : 'Which chair?'}
-                </h3>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                {chairsForBranch.map((chair) => {
-                  const selected = chairId === chair.id;
-                  return (
-                    <button
-                      key={chair.id}
-                      type="button"
-                      onClick={() => setChairId(chair.id)}
-                      className={`tactile-btn text-left p-3 rounded-lg border transition-all ${
-                        selected
-                          ? 'bg-white border-teal-500 ring-2 ring-teal-500/25'
-                          : 'bg-white border-slate-200 hover:border-slate-300'
-                      }`}
-                    >
-                      <div className="text-xs font-bold text-slate-900">{chair.label}</div>
-                      <div className="text-[11px] text-slate-500 mt-1">{chair.suiteName}</div>
-                    </button>
-                  );
-                })}
-              </div>
-            </section>
-          ) : (
-            <div className="text-[11px] text-slate-600 bg-white border border-slate-200 rounded-lg px-3 py-2.5">
-              Solo chair — auto-selected <strong>{chairsForBranch[0]?.label ?? 'Chair 1'}</strong>
-              {clinicScale === 'SINGLE' ? ' for this clinic.' : ' at this branch.'}
-            </div>
-          )
           )}
         </div>
 

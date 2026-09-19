@@ -723,6 +723,18 @@ export const WorkstationApp: React.FC = () => {
     });
   };
 
+  const handleOpenBilling = (patientId: string) => {
+    setCurrentPatientId(patientId);
+    setActiveMainTab('operatory');
+    setActiveOperatorySubTab('billing');
+  };
+
+  const handleOpenPrescription = (patientId: string) => {
+    setCurrentPatientId(patientId);
+    setActiveMainTab('operatory');
+    setActiveOperatorySubTab('prescriptions');
+  };
+
   const handleOperatorySubTabChange = (tab: OperatorySubTab) => {
     setActiveOperatorySubTab(tab);
     appendTreatmentAction(`Opened ${tab}`);
@@ -1016,6 +1028,8 @@ export const WorkstationApp: React.FC = () => {
             onAppointmentsChange={appointments !== null ? handleAppointmentsChange : undefined}
             onEnsurePatient={handleEnsurePatient}
             onCallToChair={handleCallToChair}
+            onOpenBilling={handleOpenBilling}
+            onOpenPrescription={handleOpenPrescription}
             walkInDisabled={!clinicWritable}
           />
           </>
