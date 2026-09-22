@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, Check } from 'lucide-react';
+import { ArrowRight, Check, Sparkles } from 'lucide-react';
 import { PublicShell } from '../components/Public/PublicShell';
 import { MarketingFaqAccordion } from '../components/Public/MarketingFaqAccordion';
 import { PRICING_TIERS, SALES_CONTACT_HREF, TRIAL_LENGTH_DAYS } from './marketingCopy';
@@ -14,58 +14,103 @@ function formatInr(n: number): string {
 }
 
 export const PricingPage: React.FC = () => {
+  const [billingCycle, setBillingCycle] = useState<'annual' | 'monthly'>('annual');
+
+  const mainTiers = PRICING_TIERS.filter((t) => t.id !== 'enterprise');
+  const enterpriseTier = PRICING_TIERS.find((t) => t.id === 'enterprise');
+
   return (
     <PublicShell>
       <div className="mx-auto max-w-6xl px-5 py-14 sm:py-16">
-        <p className="mb-3 text-[11px] font-bold uppercase tracking-[0.18em] text-[var(--color-brand)]">
-          Pricing
-        </p>
-        <h1 className="font-display max-w-2xl text-3xl font-extrabold tracking-tight text-slate-900 sm:text-4xl">
-          Clinic license by chair — not per doctor login
-        </h1>
-        <p className="mt-3 max-w-xl text-sm leading-relaxed text-slate-600 sm:text-base">
-          Monthly INR for one clinic entity. Unlimited staff seats on that license. Start with a{' '}
-          {TRIAL_LENGTH_DAYS}-day live pilot, then we activate Starter or Multi-Chair on invoice
-          (UPI / NEFT). Enterprise is custom.
-        </p>
+        <div className="text-center sm:text-left">
+          <p className="mb-3 text-[11px] font-bold uppercase tracking-[0.18em] text-[var(--color-brand)]">
+            Transparent Pricing
+          </p>
+          <h1 className="font-display max-w-2xl text-3xl font-extrabold tracking-tight text-slate-900 sm:text-4xl">
+            Simple pricing for modern dental clinics
+          </h1>
+          <p className="mt-3 max-w-2xl text-sm leading-relaxed text-slate-600 sm:text-base">
+            Full operatory floor access included on all plans — no artificial chair gating, no per-doctor fees. Start with a{' '}
+            {TRIAL_LENGTH_DAYS}-day free pilot, then select your growth tier.
+          </p>
 
-        <div className="mt-12 grid gap-5 lg:grid-cols-3">
-          {PRICING_TIERS.map((tier) => {
-            const isContact = tier.cta === 'contact';
+          {/* Billing Cycle Toggle */}
+          <div className="mt-8 inline-flex items-center rounded-xl bg-slate-100 p-1.5 border border-slate-200">
+            <button
+              type="button"
+              onClick={() => setBillingCycle('annual')}
+              className={`rounded-lg px-4 py-2 text-xs font-bold transition-all ${
+                billingCycle === 'annual'
+                  ? 'bg-white text-slate-900 shadow-xs'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              Annual Autopay
+              <span className="ml-1.5 rounded-md bg-emerald-100 px-2 py-0.5 text-[10px] font-bold text-emerald-800">
+                Best Value (Save ~17%)
+              </span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setBillingCycle('monthly')}
+              className={`rounded-lg px-4 py-2 text-xs font-bold transition-all ${
+                billingCycle === 'monthly'
+                  ? 'bg-white text-slate-900 shadow-xs'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              Monthly Billing
+            </button>
+          </div>
+        </div>
+
+        {/* 3 Core Tiers Grid */}
+        <div className="mt-10 grid gap-6 lg:grid-cols-3">
+          {mainTiers.map((tier) => {
+            const price =
+              billingCycle === 'annual' ? tier.priceAnnualInr : tier.priceMonthlyInr;
+            const period =
+              billingCycle === 'annual' ? tier.periodAnnual : tier.periodMonthly;
+
             return (
               <div
                 key={tier.id}
-                className={`relative flex flex-col rounded-xl border bg-white p-6 shadow-sm ${
+                className={`relative flex flex-col rounded-2xl border bg-white p-7 shadow-sm transition-all hover:shadow-md ${
                   tier.popular
                     ? 'border-[var(--color-brand)] ring-2 ring-[var(--color-brand)]/20'
                     : 'border-slate-200'
                 }`}
               >
                 {tier.popular && (
-                  <span className="absolute -top-2.5 left-5 rounded-md bg-[var(--color-brand)] px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white">
+                  <span className="absolute -top-3 left-6 rounded-md bg-[var(--color-brand)] px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-white shadow-xs">
                     Most popular
                   </span>
                 )}
-                <h2 className="font-display text-lg font-bold text-slate-900">{tier.name}</h2>
-                <p className="mt-0.5 text-[12px] font-medium text-slate-500">{tier.tagline}</p>
-                <p className="mt-4 font-display text-3xl font-extrabold tracking-tight text-slate-900">
-                  {isContact ? (
-                    <span className="text-2xl">Custom</span>
-                  ) : (
-                    <>
-                      {formatInr(tier.priceInr)}
-                      <span className="text-sm font-semibold text-slate-500">{tier.period}</span>
-                    </>
-                  )}
-                </p>
-                {!isContact && (
-                  <p className="mt-1 text-[11px] text-slate-500">
-                    From {formatInr(tier.priceInr)} list · activated after pilot
+                <h2 className="font-display text-xl font-bold text-slate-900">{tier.name}</h2>
+                <p className="mt-1 text-[13px] font-medium text-slate-500">{tier.tagline}</p>
+
+                <div className="mt-5">
+                  <p className="font-display text-3xl font-extrabold tracking-tight text-slate-900">
+                    {price !== null ? formatInr(price) : 'Custom'}
+                    <span className="text-sm font-semibold text-slate-500">{period}</span>
                   </p>
-                )}
-                <ul className="mt-6 flex-1 space-y-2.5">
+                  {billingCycle === 'annual' && tier.equivalentMonthlyInr && (
+                    <p className="mt-1 text-[12px] font-medium text-emerald-700">
+                      Effective {formatInr(tier.equivalentMonthlyInr)}/month · billed annually
+                    </p>
+                  )}
+                  {billingCycle === 'monthly' && (
+                    <p className="mt-1 text-[12px] text-slate-500">
+                      Billed monthly · cancel anytime
+                    </p>
+                  )}
+                </div>
+
+                <div className="my-6 border-t border-slate-100" />
+
+                <ul className="flex-1 space-y-3">
                   {tier.points.map((line) => (
-                    <li key={line} className="flex gap-2 text-[13px] leading-snug text-slate-700">
+                    <li key={line} className="flex gap-2.5 text-[13px] leading-snug text-slate-700">
                       <Check
                         className="mt-0.5 h-4 w-4 shrink-0 text-[var(--color-brand)]"
                         strokeWidth={2.5}
@@ -74,39 +119,56 @@ export const PricingPage: React.FC = () => {
                     </li>
                   ))}
                 </ul>
-                {isContact ? (
-                  <a
-                    href={SALES_CONTACT_HREF}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="tactile-btn mt-8 inline-flex items-center justify-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-bold text-slate-800 hover:bg-white active:scale-[0.97]"
-                  >
-                    Talk to sales
-                    <ArrowRight className="h-4 w-4" strokeWidth={2.5} />
-                  </a>
-                ) : (
-                  <Link
-                    to="/signup"
-                    className={`tactile-btn mt-8 inline-flex items-center justify-center gap-2 rounded-lg px-4 py-3 text-sm font-bold active:scale-[0.97] ${
-                      tier.popular
-                        ? 'bg-[var(--color-brand)] text-white hover:bg-[var(--color-brand-hover)]'
-                        : 'border border-slate-200 bg-slate-50 text-slate-800 hover:bg-white'
-                    }`}
-                  >
-                    Start {TRIAL_LENGTH_DAYS}-day pilot
-                    <ArrowRight className="h-4 w-4" strokeWidth={2.5} />
-                  </Link>
-                )}
+
+                <Link
+                  to="/signup"
+                  className={`tactile-btn mt-8 inline-flex items-center justify-center gap-2 rounded-xl px-5 py-3.5 text-sm font-bold active:scale-[0.97] transition-all shadow-xs ${
+                    tier.popular
+                      ? 'bg-[var(--color-brand)] text-white hover:bg-[var(--color-brand-hover)]'
+                      : 'border border-slate-200 bg-slate-50 text-slate-800 hover:bg-slate-100'
+                  }`}
+                >
+                  Start {TRIAL_LENGTH_DAYS}-day free pilot
+                  <ArrowRight className="h-4 w-4" strokeWidth={2.5} />
+                </Link>
               </div>
             );
           })}
         </div>
 
-        <div className="mt-12 flex flex-col items-start gap-4 rounded-xl border border-slate-200 bg-white p-6 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+        {/* Enterprise Chain Card */}
+        {enterpriseTier && (
+          <div className="mt-8 rounded-2xl border border-slate-200 bg-gradient-to-r from-slate-900 via-slate-800 to-teal-950 p-6 sm:p-8 text-white flex flex-col md:flex-row items-start md:items-center justify-between gap-6 shadow-md">
+            <div className="max-w-2xl">
+              <div className="inline-flex items-center gap-1.5 rounded-md bg-teal-500/20 text-teal-300 border border-teal-500/30 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide">
+                <Sparkles className="w-3 h-3" />
+                Multi-Branch Networks
+              </div>
+              <h3 className="font-display text-xl font-bold text-white mt-2">
+                Enterprise Chain & Dental Hospital Networks
+              </h3>
+              <p className="mt-1.5 text-sm text-slate-300 leading-relaxed">
+                Centralized command center across multiple clinic branches, custom Practo/EHR data migration, custom PBX telephony, dedicated infrastructure, and prioritized account managers.
+              </p>
+            </div>
+            <a
+              href={SALES_CONTACT_HREF}
+              target="_blank"
+              rel="noreferrer"
+              className="tactile-btn shrink-0 inline-flex items-center justify-center gap-2 rounded-xl bg-white px-6 py-3.5 text-sm font-bold text-slate-900 hover:bg-slate-100 active:scale-[0.97]"
+            >
+              Talk to enterprise sales
+              <ArrowRight className="h-4 w-4 text-slate-900" strokeWidth={2.5} />
+            </a>
+          </div>
+        )}
+
+        {/* Sandbox Callout */}
+        <div className="mt-10 flex flex-col items-start gap-4 rounded-xl border border-slate-200 bg-white p-6 shadow-sm sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h2 className="text-sm font-bold text-slate-900">Not ready for a live clinic?</h2>
             <p className="mt-1 text-[13px] text-slate-600">
-              Open the free sandbox with sample Indian records — no card required.
+              Open the free sandbox with sample Indian dental records — no credit card required.
             </p>
           </div>
           <Link
@@ -118,9 +180,7 @@ export const PricingPage: React.FC = () => {
         </div>
 
         <p className="mt-8 max-w-2xl text-[12px] leading-relaxed text-slate-500">
-          Prices are monthly INR for a single clinic entity. Taxes extra where applicable. Payment is
-          invoice-activated during early access (no self-serve card checkout yet). Stock ledger is
-          per tablet today. Multi-branch chain P&L remains roadmap — Enterprise is contact-only.
+          All prices are in INR for a single clinic entity. Taxes extra where applicable. Every tier includes access to all operatory chairs on your clinic floor with zero artificial chair gating. Start with a 14-day free pilot.
         </p>
 
         <MarketingFaqAccordion />

@@ -305,8 +305,7 @@ export const SellHomePage: React.FC = () => {
               Start on your floor this week
             </h2>
             <p className="mt-2 text-sm leading-relaxed text-slate-600">
-              14-day live pilot, then Starter ₹1,499 (1 chair) or Multi-Chair ₹2,999 (up to 3) —
-              activated on invoice.
+              14-day live pilot, then Core OS at ₹4,999/year or Growth at ₹8,999/year — all operatory chairs included.
             </p>
           </div>
           <div className="flex flex-col gap-3 sm:flex-row">
