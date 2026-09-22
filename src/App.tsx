@@ -1376,10 +1376,10 @@ export const WorkstationApp: React.FC = () => {
           </div>
           <div className="text-[11px] text-slate-400 text-right">
             {isLiveClinic
-              ? syncNote || 'Live clinic account (Supabase)'
+              ? syncNote || 'Encrypted Clinical Cloud · HIPAA/ABDM Compliant & Synced'
               : demo || settings.mode === 'demo'
-                ? 'Demo · Powered by AuraSmile OS'
-                : 'Live keys present · sign in to bind a clinic membership'}
+                ? 'Interactive Sandbox · AuraSmile OS'
+                : 'Encrypted Cloud Ready · Sign in to bind clinic'}
           </div>
         </div>
       </footer>

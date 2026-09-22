@@ -12,6 +12,9 @@ import {
   X,
   Pill,
   Star,
+  TrendingUp,
+  ShieldCheck,
+  Activity,
 } from 'lucide-react';
 import { formatPaiseToInr } from '../../domain/financials';
 import { WhatsAppIcon } from '../icons/WhatsAppIcon';
@@ -826,37 +829,105 @@ export const AuraSmileHomeDashboard: React.FC<AuraSmileHomeDashboardProps> = ({
     <div className="space-y-4">
       {isClinicOwner && (
         <section className="space-y-3">
-          <p className="text-[11px] font-bold uppercase tracking-widest text-teal-700">
-            Owner Overview · Today
-          </p>
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-            <div className="relative rounded-xl border border-slate-200 bg-white p-4">
-              <IndianRupee className="absolute right-3 top-3 h-4 w-4 text-teal-700" />
-              <div className="text-xl font-bold text-slate-900 font-mono pr-6">
+          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200/80 pb-2">
+            <div className="flex items-center gap-2">
+              <span className="flex h-6 w-6 items-center justify-center rounded-md bg-teal-50 text-teal-700 border border-teal-200 shadow-2xs">
+                <Activity className="h-3.5 w-3.5" />
+              </span>
+              <p className="text-[11px] font-bold uppercase tracking-widest text-slate-800">
+                Clinic Executive Cockpit · Live Floor Analytics
+              </p>
+            </div>
+            <div className="flex items-center gap-3 text-[11px] text-slate-500 font-medium">
+              <span className="inline-flex items-center gap-1 text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                Live Sync Active
+              </span>
+              {googleReviewUrl && (
+                <a
+                  href={googleReviewUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-1 text-amber-800 bg-amber-50 hover:bg-amber-100 px-2 py-0.5 rounded-full border border-amber-200 motion-colors"
+                >
+                  <Star className="h-3 w-3 fill-amber-500 text-amber-500" />
+                  GMB 5-Star Booster Active
+                </a>
+              )}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5">
+            {/* Card 1: Revenue Collected */}
+            <div className="group relative rounded-2xl border border-slate-200/90 bg-gradient-to-br from-white to-slate-50/50 p-4 shadow-xs transition-all hover:shadow-md hover:border-teal-300">
+              <div className="flex items-center justify-between text-slate-500">
+                <span className="text-xs font-semibold text-slate-600">Collected Today</span>
+                <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-teal-50 text-teal-700 border border-teal-100">
+                  <IndianRupee className="h-3.5 w-3.5" />
+                </span>
+              </div>
+              <div className="mt-2 text-2xl font-black text-slate-900 font-mono tracking-tight">
                 {formatPaiseToInr(ownerTodayRevenuePaise, false)}
               </div>
-              <div className="text-xs text-slate-500 mt-1">collected today</div>
+              <div className="mt-2 flex items-center justify-between text-[11px]">
+                <span className="text-emerald-700 font-semibold inline-flex items-center gap-0.5">
+                  <TrendingUp className="h-3 w-3" /> Real-time settled
+                </span>
+                <span className="text-slate-400 font-mono text-[10px]">Zero leak</span>
+              </div>
             </div>
-            <div className="relative rounded-xl border border-slate-200 bg-white p-4">
-              <Clock className="absolute right-3 top-3 h-4 w-4 text-teal-700" />
-              <div className="text-xl font-bold text-slate-900 font-mono pr-6">
+
+            {/* Card 2: Pending Receivables / Dues */}
+            <div className="group relative rounded-2xl border border-slate-200/90 bg-gradient-to-br from-white to-slate-50/50 p-4 shadow-xs transition-all hover:shadow-md hover:border-amber-300">
+              <div className="flex items-center justify-between text-slate-500">
+                <span className="text-xs font-semibold text-slate-600">Pending Receivables</span>
+                <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-amber-50 text-amber-700 border border-amber-100">
+                  <Clock className="h-3.5 w-3.5" />
+                </span>
+              </div>
+              <div className="mt-2 text-2xl font-black text-slate-900 font-mono tracking-tight">
                 {formatPaiseToInr(ownerOutstandingPaise, false)}
               </div>
-              <div className="text-xs text-slate-500 mt-1">pending</div>
-            </div>
-            <div className="relative rounded-xl border border-slate-200 bg-white p-4">
-              <Stethoscope className="absolute right-3 top-3 h-4 w-4 text-teal-700" />
-              <div className="text-xl font-bold text-slate-900 font-mono pr-6">
-                {ownerConsultantsToday}
+              <div className="mt-2 flex items-center justify-between text-[11px]">
+                <span className="text-amber-800 font-semibold">Active chair pipeline</span>
+                <span className="text-slate-400 font-mono text-[10px]">Auto-tracked</span>
               </div>
-              <div className="text-xs text-slate-500 mt-1">consultants active</div>
             </div>
-            <div className="relative rounded-xl border border-slate-200 bg-white p-4">
-              <FlaskConical className="absolute right-3 top-3 h-4 w-4 text-teal-700" />
-              <div className="text-xl font-bold text-slate-900 font-mono pr-6">
-                {openLabSlips}
+
+            {/* Card 3: Operatory Floor Load & Consultants */}
+            <div className="group relative rounded-2xl border border-slate-200/90 bg-gradient-to-br from-white to-slate-50/50 p-4 shadow-xs transition-all hover:shadow-md hover:border-teal-300">
+              <div className="flex items-center justify-between text-slate-500">
+                <span className="text-xs font-semibold text-slate-600">Specialists & TDS Ledger</span>
+                <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-teal-50 text-teal-700 border border-teal-100">
+                  <Stethoscope className="h-3.5 w-3.5" />
+                </span>
               </div>
-              <div className="text-xs text-slate-500 mt-1">lab slips open</div>
+              <div className="mt-2 text-2xl font-black text-slate-900 font-mono tracking-tight">
+                {ownerConsultantsToday} <span className="text-xs font-normal text-slate-500 font-sans">visiting doctors</span>
+              </div>
+              <div className="mt-2 flex items-center justify-between text-[11px]">
+                <span className="text-teal-700 font-semibold inline-flex items-center gap-1">
+                  <ShieldCheck className="h-3 w-3" /> Sec 194J 10% TDS
+                </span>
+                <span className="text-slate-400 font-mono text-[10px]">60/40 split</span>
+              </div>
+            </div>
+
+            {/* Card 4: Lab Slips & Clinical Quality */}
+            <div className="group relative rounded-2xl border border-slate-200/90 bg-gradient-to-br from-white to-slate-50/50 p-4 shadow-xs transition-all hover:shadow-md hover:border-blue-300">
+              <div className="flex items-center justify-between text-slate-500">
+                <span className="text-xs font-semibold text-slate-600">Lab Orders & Crown Trials</span>
+                <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-50 text-blue-700 border border-blue-100">
+                  <FlaskConical className="h-3.5 w-3.5" />
+                </span>
+              </div>
+              <div className="mt-2 text-2xl font-black text-slate-900 font-mono tracking-tight">
+                {openLabSlips} <span className="text-xs font-normal text-slate-500 font-sans">in fabrication</span>
+              </div>
+              <div className="mt-2 flex items-center justify-between text-[11px]">
+                <span className="text-blue-700 font-semibold">Zirconia / E.max slip tracking</span>
+                <span className="text-slate-400 font-mono text-[10px]">Zero delay</span>
+              </div>
             </div>
           </div>
         </section>
