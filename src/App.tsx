@@ -196,25 +196,31 @@ export const WorkstationApp: React.FC = () => {
     trialDaysLeft <= 7;
 
   const viewerMemberId = currentDoctor.doctor.memberId ?? null;
+  const isFrontDesk = currentDoctor.doctor.role === 'FRONT_DESK';
+  const isDoctor = currentDoctor.doctor.role === 'DOCTOR';
+  /** Owner-dentist (common in India) keeps Treat + Clinic ops */
+  const isClinicOwner = currentDoctor.doctor.memberRole === 'OWNER';
+  const canAccessClinicOps = isFrontDesk || isClinicOwner;
+
   const visiblePatients = useMemo(
     () =>
       filterPatientsForViewer(
         patients,
         currentDoctor.doctor.displayName,
         currentDoctor.doctor.role,
-        viewerMemberId
+        viewerMemberId,
+        currentDoctor.doctor.memberRole
       ),
-    [patients, currentDoctor.doctor.displayName, currentDoctor.doctor.role, viewerMemberId]
+    [
+      patients,
+      currentDoctor.doctor.displayName,
+      currentDoctor.doctor.role,
+      viewerMemberId,
+      currentDoctor.doctor.memberRole,
+    ]
   );
   const treatPatient = visiblePatients.find((p) => p.id === currentPatientId) ?? null;
-
   const clinicBranchLabel = `${currentDoctor.branch.name} (${currentDoctor.branch.code})`;
-
-  const isFrontDesk = currentDoctor.doctor.role === 'FRONT_DESK';
-  const isDoctor = currentDoctor.doctor.role === 'DOCTOR';
-  /** Owner-dentist (common in India) keeps Treat + Clinic ops */
-  const isClinicOwner = currentDoctor.doctor.memberRole === 'OWNER';
-  const canAccessClinicOps = isFrontDesk || isClinicOwner;
 
   useEffect(() => {
     if (isFrontDesk) return;
@@ -422,8 +428,9 @@ export const WorkstationApp: React.FC = () => {
     (async () => {
       setSyncNote('Loading clinic records…');
       try {
+        const memberRole = currentDoctor.doctor.memberRole;
         const doctorMemberFilter =
-          !viewerSeesFullRoster(role) && memberId ? memberId : undefined;
+          !viewerSeesFullRoster(role, memberRole) && memberId ? memberId : undefined;
         const [dbPatients, dbAppts, liveBranding, staff] = await Promise.all([
           listPatientsForClinic(liveClinicId, {
             assignedMemberId: doctorMemberFilter,
@@ -440,13 +447,15 @@ export const WorkstationApp: React.FC = () => {
           dbPatients,
           displayName,
           role,
-          memberId
+          memberId,
+          memberRole
         );
         const scopedAppts = filterQueueForViewer(
           dbAppts,
           displayName,
           role,
-          memberId
+          memberId,
+          memberRole
         );
         setPatients(scopedPatients);
         setAppointments(scopedAppts);
@@ -456,7 +465,7 @@ export const WorkstationApp: React.FC = () => {
         if (liveBranding) setBranding(liveBranding);
         setSyncNote(
           scopedPatients.length === 0
-            ? 'Live clinic ready — no patients yet. Walk-ins will save to Supabase.'
+            ? 'Live clinic ready — no patients yet. New walk-ins sync to clinical cloud.'
             : `Synced ${scopedPatients.length} patients · ${scopedAppts.length} appointments today`
         );
       } catch (err) {

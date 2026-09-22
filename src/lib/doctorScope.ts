@@ -34,9 +34,9 @@ export function isAssignedToMember(
   return assignedMemberId === viewerMemberId;
 }
 
-/** Front desk (and OWNER mapped to desk) see the full clinic roster. */
-export function viewerSeesFullRoster(role: ClinicRole): boolean {
-  return role === 'FRONT_DESK';
+/** Front desk and Clinic OWNERs see the full clinic roster. */
+export function viewerSeesFullRoster(role: ClinicRole, memberRole?: 'DOCTOR' | 'FRONT_DESK' | 'OWNER'): boolean {
+  return role === 'FRONT_DESK' || memberRole === 'OWNER';
 }
 
 type AssignablePatient = {
@@ -49,14 +49,15 @@ type AssignableQueueItem = {
   assignedMemberId?: string | null;
 };
 
-/** Doctors see only their patients; front desk sees the full clinic roster. Prefers member id. */
+/** Doctors see only their patients; front desk and clinic owners see the full clinic roster. */
 export function filterPatientsForViewer<T extends AssignablePatient>(
   patients: T[],
   doctorDisplayName: string,
   role: ClinicRole,
-  viewerMemberId?: string | null
+  viewerMemberId?: string | null,
+  memberRole?: 'DOCTOR' | 'FRONT_DESK' | 'OWNER'
 ): T[] {
-  if (viewerSeesFullRoster(role)) return patients;
+  if (viewerSeesFullRoster(role, memberRole)) return patients;
   return patients.filter((p) => {
     if (viewerMemberId && p.assignedMemberId) {
       return isAssignedToMember(p.assignedMemberId, viewerMemberId);
@@ -69,9 +70,10 @@ export function filterQueueForViewer<T extends AssignableQueueItem>(
   queue: T[],
   doctorDisplayName: string,
   role: ClinicRole,
-  viewerMemberId?: string | null
+  viewerMemberId?: string | null,
+  memberRole?: 'DOCTOR' | 'FRONT_DESK' | 'OWNER'
 ): T[] {
-  if (viewerSeesFullRoster(role)) return queue;
+  if (viewerSeesFullRoster(role, memberRole)) return queue;
   return queue.filter((q) => {
     if (viewerMemberId && q.assignedMemberId) {
       return isAssignedToMember(q.assignedMemberId, viewerMemberId);
