@@ -1,14 +1,11 @@
 import React, { useState } from 'react';
 import {
   ArrowRight,
-  Building2,
   Check,
   CheckCircle2,
-  Copy,
   CreditCard,
   Download,
   Info,
-  QrCode,
   ShieldCheck,
   X,
 } from 'lucide-react';
@@ -26,8 +23,6 @@ interface ClinicSubscriptionModalProps {
   entitlement: ClinicEntitlement;
   onPlanActivated: (newPlan: ClinicPlan, paymentRef: string) => void;
 }
-
-type PaymentMethodTab = 'razorpay' | 'upi_qr' | 'neft';
 
 const SUBSCRIPTION_TIERS: {
   id: ClinicPlan;
@@ -116,9 +111,6 @@ export const ClinicSubscriptionModal: React.FC<ClinicSubscriptionModalProps> = (
 }) => {
   const [selectedPlanId, setSelectedPlanId] = useState<ClinicPlan>('growth');
   const [billingCycle, setBillingCycle] = useState<'annual' | 'monthly'>('annual');
-  const [paymentTab, setPaymentTab] = useState<PaymentMethodTab>('razorpay');
-  const [utrNumber, setUtrNumber] = useState('');
-  const [copiedUpi, setCopiedUpi] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [successReceipt, setSuccessReceipt] = useState<{
     planName: string;
@@ -134,20 +126,6 @@ export const ClinicSubscriptionModal: React.FC<ClinicSubscriptionModalProps> = (
   const amountInr =
     billingCycle === 'annual' ? selectedTier.annualPriceInr : selectedTier.monthlyPriceInr;
   const daysLeft = daysLeftInTrial(entitlement.trialEndsAt);
-
-  const officialUpiId = 'aurasmile@icici';
-  const upiUri = `upi://pay?pa=${officialUpiId}&pn=AuraSmile%20OS&am=${amountInr}&cu=INR&tn=${encodeURIComponent(
-    `${clinicName.slice(0, 15)} ${selectedTier.name} Subscription`
-  )}`;
-  const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(
-    upiUri
-  )}`;
-
-  const copyUpiId = () => {
-    navigator.clipboard.writeText(officialUpiId);
-    setCopiedUpi(true);
-    setTimeout(() => setCopiedUpi(false), 2000);
-  };
 
   const handleRazorpayPayment = () => {
     setIsProcessing(true);
@@ -169,8 +147,7 @@ export const ClinicSubscriptionModal: React.FC<ClinicSubscriptionModalProps> = (
     loadRazorpayScript().then((loaded) => {
       if (!loaded) {
         setIsProcessing(false);
-        alert('Could not load Razorpay SDK. Please use the Direct UPI QR option.');
-        setPaymentTab('upi_qr');
+        alert('Could not load Razorpay SDK. Please check your internet connection.');
         return;
       }
 
@@ -212,7 +189,7 @@ export const ClinicSubscriptionModal: React.FC<ClinicSubscriptionModalProps> = (
         const mockRef = `RZP_DEMO_${Math.floor(100000 + Math.random() * 900000)}`;
         if (
           confirm(
-            `Razorpay Test Mode: Simulate successful payment of ₹${amountInr.toLocaleString(
+            `Razorpay Test Sandbox: Simulate instant payment verification of ₹${amountInr.toLocaleString(
               'en-IN'
             )} for ${selectedTier.name}?`
           )
@@ -221,15 +198,6 @@ export const ClinicSubscriptionModal: React.FC<ClinicSubscriptionModalProps> = (
         }
       }
     });
-  };
-
-  const handleConfirmUtr = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!utrNumber.trim() || utrNumber.trim().length < 6) {
-      alert('Please enter a valid 12-digit UPI UTR / Bank Reference number.');
-      return;
-    }
-    finalizeActivation(selectedTier.id, `UPI_UTR_${utrNumber.trim()}`, amountInr);
   };
 
   const finalizeActivation = (planId: ClinicPlan, paymentRef: string, amount: number) => {
@@ -445,178 +413,43 @@ export const ClinicSubscriptionModal: React.FC<ClinicSubscriptionModalProps> = (
 
             {/* Payment Mode Selection */}
             <div className="mt-6 rounded-xl border border-slate-200 bg-slate-50 p-4">
-              <div className="flex items-center justify-between border-b border-slate-200 pb-3 mb-4">
-                <div>
-                  <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider">
-                    Select Payment Method
-                  </h4>
-                  <p className="text-[11px] text-slate-500">
-                    Total: ₹{amountInr.toLocaleString('en-IN')} for {selectedTier.name} (
-                    {billingCycle})
-                  </p>
-                </div>
-
-                {/* Tabs */}
-                <div className="flex gap-1">
-                  <button
-                    type="button"
-                    onClick={() => setPaymentTab('razorpay')}
-                    className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold transition-all ${
-                      paymentTab === 'razorpay'
-                        ? 'bg-white text-slate-900 shadow-xs border border-slate-200'
-                        : 'text-slate-600 hover:text-slate-900'
-                    }`}
-                  >
-                    <CreditCard className="h-3.5 w-3.5 text-teal-600" />
-                    Razorpay (Cards/UPI/NetBanking)
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setPaymentTab('upi_qr')}
-                    className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold transition-all ${
-                      paymentTab === 'upi_qr'
-                        ? 'bg-white text-slate-900 shadow-xs border border-slate-200'
-                        : 'text-slate-600 hover:text-slate-900'
-                    }`}
-                  >
-                    <QrCode className="h-3.5 w-3.5 text-teal-600" />
-                    Direct UPI QR (0% Fee)
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setPaymentTab('neft')}
-                    className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold transition-all ${
-                      paymentTab === 'neft'
-                        ? 'bg-white text-slate-900 shadow-xs border border-slate-200'
-                        : 'text-slate-600 hover:text-slate-900'
-                    }`}
-                  >
-                    <Building2 className="h-3.5 w-3.5 text-teal-600" />
-                    NEFT / IMPS
-                  </button>
-                </div>
+              <div className="border-b border-slate-200 pb-3 mb-4">
+                <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider">
+                  Payment Checkout (Razorpay)
+                </h4>
+                <p className="text-[11px] text-slate-500">
+                  Total: ₹{amountInr.toLocaleString('en-IN')} for {selectedTier.name} ({billingCycle})
+                </p>
               </div>
 
-              {/* Razorpay Tab */}
-              {paymentTab === 'razorpay' && (
-                <div className="flex flex-col sm:flex-row items-center justify-between gap-4 py-2">
-                  <div className="space-y-1">
-                    <p className="text-xs font-semibold text-slate-800">
-                      Instant Automatic Activation via Razorpay Gateway
-                    </p>
-                    <p className="text-[11px] text-slate-500">
-                      Supports Google Pay, PhonePe, Paytm, Credit/Debit Cards, NetBanking, and EMI.
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={handleRazorpayPayment}
-                    disabled={isProcessing}
-                    className="tactile-btn inline-flex items-center gap-2 rounded-xl bg-teal-600 px-6 py-3 text-xs font-bold text-white hover:bg-teal-700 shadow-sm shrink-0 disabled:opacity-50"
-                  >
-                    {isProcessing ? 'Connecting...' : `Pay ₹${amountInr.toLocaleString('en-IN')} via Razorpay`}
-                    <ArrowRight className="h-4 w-4" />
-                  </button>
-                </div>
-              )}
-
-              {/* Direct UPI QR Tab */}
-              {paymentTab === 'upi_qr' && (
-                <div className="flex flex-col sm:flex-row items-center gap-6 py-2">
-                  <div className="flex flex-col items-center p-2 rounded-xl bg-white border border-slate-200 shrink-0">
-                    <img
-                      src={qrCodeUrl}
-                      alt="UPI QR Code"
-                      className="h-36 w-36 object-contain"
-                    />
-                    <span className="text-[10px] text-slate-500 font-mono mt-1">
-                      Scan with any UPI App
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-4 py-2">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <span className="inline-flex items-center gap-1.5 rounded-md bg-teal-50 border border-teal-200 px-2 py-0.5 text-[11px] font-bold text-teal-800">
+                      <CreditCard className="h-3 w-3 text-teal-600" />
+                      Razorpay Checkout
+                    </span>
+                    <span className="text-[11px] text-emerald-700 font-semibold">
+                      ⚡ Instant 2-Second Verification
                     </span>
                   </div>
-
-                  <div className="flex-1 space-y-3 w-full">
-                    <div>
-                      <span className="text-[11px] text-slate-500">Official UPI ID:</span>
-                      <div className="flex items-center gap-2 mt-0.5">
-                        <span className="font-mono text-xs font-bold text-slate-900 bg-white px-2.5 py-1 rounded-md border border-slate-200">
-                          {officialUpiId}
-                        </span>
-                        <button
-                          type="button"
-                          onClick={copyUpiId}
-                          className="inline-flex items-center gap-1 text-[11px] font-semibold text-teal-700 hover:text-teal-800"
-                        >
-                          <Copy className="h-3 w-3" />
-                          {copiedUpi ? 'Copied!' : 'Copy'}
-                        </button>
-                      </div>
-                    </div>
-
-                    <form onSubmit={handleConfirmUtr} className="space-y-2">
-                      <label className="block text-[11px] font-semibold text-slate-700">
-                        Enter 12-Digit UPI Ref / UTR Number after payment:
-                      </label>
-                      <div className="flex gap-2">
-                        <input
-                          type="text"
-                          required
-                          value={utrNumber}
-                          onChange={(e) => setUtrNumber(e.target.value)}
-                          placeholder="e.g. 425612349876"
-                          className="flex-1 rounded-lg border border-slate-300 bg-white px-3 py-2 font-mono text-xs text-slate-900 focus:border-teal-500 focus:outline-none"
-                        />
-                        <button
-                          type="submit"
-                          className="tactile-btn rounded-lg bg-teal-600 px-4 py-2 text-xs font-bold text-white hover:bg-teal-700"
-                        >
-                          Confirm & Activate
-                        </button>
-                      </div>
-                    </form>
-                  </div>
+                  <p className="text-xs font-semibold text-slate-800">
+                    Pay securely via UPI (Google Pay, PhonePe, Paytm), NetBanking, Credit/Debit Cards or EMI.
+                  </p>
+                  <p className="text-[11px] text-slate-500">
+                    No manual UTR copy-pasting required. Your clinic plan & features activate automatically the second payment completes.
+                  </p>
                 </div>
-              )}
-
-              {/* NEFT / IMPS Tab */}
-              {paymentTab === 'neft' && (
-                <div className="py-2 space-y-3">
-                  <div className="grid grid-cols-2 gap-3 text-xs font-mono bg-white p-3 rounded-lg border border-slate-200">
-                    <div>
-                      <span className="text-slate-500">Account Name:</span>
-                      <p className="font-bold text-slate-800">AuraSmile OS Healthcare Tech</p>
-                    </div>
-                    <div>
-                      <span className="text-slate-500">Bank:</span>
-                      <p className="font-bold text-slate-800">ICICI Bank Ltd</p>
-                    </div>
-                    <div>
-                      <span className="text-slate-500">Account Number:</span>
-                      <p className="font-bold text-slate-800">000105009876</p>
-                    </div>
-                    <div>
-                      <span className="text-slate-500">IFSC Code:</span>
-                      <p className="font-bold text-slate-800">ICIC0000001</p>
-                    </div>
-                  </div>
-
-                  <form onSubmit={handleConfirmUtr} className="flex gap-2">
-                    <input
-                      type="text"
-                      required
-                      value={utrNumber}
-                      onChange={(e) => setUtrNumber(e.target.value)}
-                      placeholder="Enter Bank IMPS/NEFT Transaction UTR"
-                      className="flex-1 rounded-lg border border-slate-300 bg-white px-3 py-2 font-mono text-xs text-slate-900 focus:border-teal-500 focus:outline-none"
-                    />
-                    <button
-                      type="submit"
-                      className="tactile-btn rounded-lg bg-teal-600 px-4 py-2 text-xs font-bold text-white hover:bg-teal-700"
-                    >
-                      Submit Transfer Ref
-                    </button>
-                  </form>
-                </div>
-              )}
+                <button
+                  type="button"
+                  onClick={handleRazorpayPayment}
+                  disabled={isProcessing}
+                  className="tactile-btn inline-flex items-center gap-2 rounded-xl bg-teal-600 px-7 py-3.5 text-xs font-bold text-white hover:bg-teal-700 shadow-md hover:shadow-lg shrink-0 disabled:opacity-50 transition-all"
+                >
+                  {isProcessing ? 'Connecting Gateway...' : `Pay ₹${amountInr.toLocaleString('en-IN')} via Razorpay`}
+                  <ArrowRight className="h-4 w-4" />
+                </button>
+              </div>
             </div>
           </div>
         )}
