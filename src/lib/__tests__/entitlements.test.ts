@@ -6,6 +6,7 @@ import {
   daysLeftInTrial,
   isClinicEntitled,
   maxChairsForPlan,
+  canAccessAIVoice,
   OPEN_TRIAL_ENTITLEMENT,
   type ClinicEntitlement,
 } from '../entitlements';
@@ -93,5 +94,52 @@ describe('entitlements', () => {
     expect(clampChairCount(0, 'pro')).toBe(1);
     expect(clampChairCount(2, 'pro')).toBe(2);
     expect(clampChairCount(3, 'starter')).toBe(3);
+  });
+
+  it('strictly gates AI Voice during trial to protect from API burn', () => {
+    // Free trial must NEVER access live AI voice
+    expect(
+      canAccessAIVoice({
+        plan: 'free_trial',
+        subscriptionStatus: 'trialing',
+        trialEndsAt: null,
+      })
+    ).toBe(false);
+
+    // Starter (Core) must not access AI voice
+    expect(
+      canAccessAIVoice({
+        plan: 'starter',
+        subscriptionStatus: 'active',
+        trialEndsAt: null,
+      })
+    ).toBe(false);
+
+    // Growth must not access AI voice
+    expect(
+      canAccessAIVoice({
+        plan: 'growth',
+        subscriptionStatus: 'active',
+        trialEndsAt: null,
+      })
+    ).toBe(false);
+
+    // ONLY active ai_voice plan can access live AI voice
+    expect(
+      canAccessAIVoice({
+        plan: 'ai_voice',
+        subscriptionStatus: 'active',
+        trialEndsAt: null,
+      })
+    ).toBe(true);
+
+    // Expired or trialing ai_voice cannot burn money
+    expect(
+      canAccessAIVoice({
+        plan: 'ai_voice',
+        subscriptionStatus: 'expired',
+        trialEndsAt: null,
+      })
+    ).toBe(false);
   });
 });

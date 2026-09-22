@@ -53,7 +53,7 @@ export type DbClinic = {
   chair_count?: number;
   onboarding_completed_at?: string | null;
   /** Billing / trial — present after 20260915_clinic_billing.sql */
-  plan?: 'free_trial' | 'starter' | 'pro' | null;
+  plan?: 'free_trial' | 'starter' | 'growth' | 'ai_voice' | 'pro' | null;
   trial_ends_at?: string | null;
   subscription_status?: 'trialing' | 'active' | 'past_due' | 'expired' | null;
 };

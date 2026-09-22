@@ -434,6 +434,21 @@ export async function updateClinicProfile(
   return { ok: true };
 }
 
+export async function updateClinicSubscription(
+  clinicId: string,
+  patch: {
+    plan: import('./entitlements').ClinicPlan;
+    subscription_status: import('./entitlements').ClinicSubscriptionStatus;
+  }
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const sb = getSupabase();
+  if (!sb) return { ok: false, error: 'Supabase not configured' };
+
+  const { error } = await sb.from('clinics').update(patch).eq('id', clinicId);
+  if (error) return { ok: false, error: error.message };
+  return { ok: true };
+}
+
 export async function addClinicStaffInvite(input: {
   clinicId: string;
   displayName: string;

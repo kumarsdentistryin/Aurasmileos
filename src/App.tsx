@@ -99,8 +99,11 @@ import {
   OPEN_TRIAL_ENTITLEMENT,
   canWriteClinicData,
   daysLeftInTrial,
+  ClinicPlan,
 } from './lib/entitlements';
+import { updateClinicSubscription } from './lib/clinicAuth';
 import { TrialBanner } from './components/TrialBanner';
+import { ClinicSubscriptionModal } from './components/Billing/ClinicSubscriptionModal';
 
 function newEntityId(): string {
   if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) {
@@ -135,6 +138,7 @@ export const WorkstationApp: React.FC = () => {
   const [currentDoctor, setCurrentDoctor] =
     useState<ClinicSessionSelection>(DEFAULT_CLINIC_SESSION);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState<boolean>(false);
+  const [isSubscriptionModalOpen, setIsSubscriptionModalOpen] = useState<boolean>(false);
   const [isLocked, setIsLocked] = useState<boolean>(() => isStaffLocked());
   const [bootReady, setBootReady] = useState(false);
   const [clinicNameHint, setClinicNameHint] = useState<string | undefined>();
@@ -142,6 +146,31 @@ export const WorkstationApp: React.FC = () => {
   /** Front desk Collect → Bill handoff for any patient */
   const [deskCollectPatientId, setDeskCollectPatientId] = useState<string | null>(null);
   const [accessNotice, setAccessNotice] = useState<string | null>(null);
+
+  const handlePlanActivated = async (newPlan: ClinicPlan, paymentRef: string) => {
+    // 1. Optimistically update local currentDoctor entitlement
+    setCurrentDoctor((prev) => ({
+      ...prev,
+      entitlement: {
+        ...clinicEntitlement,
+        plan: newPlan,
+        subscriptionStatus: 'active',
+      },
+    }));
+    setSyncNote(`Subscription updated to ${newPlan.toUpperCase()} (Ref: ${paymentRef})`);
+
+    // 2. Persist to Supabase if live clinic
+    if (isLiveClinic && liveClinicId) {
+      try {
+        await updateClinicSubscription(liveClinicId, {
+          plan: newPlan,
+          subscription_status: 'active',
+        });
+      } catch (e) {
+        console.warn('[AuraSmile] could not persist subscription update to Supabase:', e);
+      }
+    }
+  };
 
   const patientsRef = useRef(patients);
   patientsRef.current = patients;
@@ -959,7 +988,13 @@ export const WorkstationApp: React.FC = () => {
         activeOperatorySubTab={activeOperatorySubTab}
         onOperatorySubTabChange={handleOperatorySubTabChange}
         activeOpsSubTab={activeOpsSubTab}
-        onOpsSubTabChange={setActiveOpsSubTab}
+        onOpsSubTabChange={(sub) => {
+          if (sub === 'subscription') {
+            setIsSubscriptionModalOpen(true);
+          } else {
+            setActiveOpsSubTab(sub);
+          }
+        }}
         session={currentDoctor}
         branding={branding}
         onOpenSwitcher={handleOpenSwitcher}
@@ -967,11 +1002,22 @@ export const WorkstationApp: React.FC = () => {
         onLogout={handleLogout}
         labelMockAsDemo={demo}
         isDemo={demo}
+        entitlement={clinicEntitlement}
+        onOpenSubscription={isClinicOwner ? () => setIsSubscriptionModalOpen(true) : undefined}
       />
 
-      {isLiveClinic && !clinicWritable && <TrialBanner mode="expired" />}
+      {isLiveClinic && !clinicWritable && (
+        <TrialBanner
+          mode="expired"
+          onUpgrade={isClinicOwner ? () => setIsSubscriptionModalOpen(true) : undefined}
+        />
+      )}
       {showTrialEndingBanner && (
-        <TrialBanner mode="ending" daysLeft={trialDaysLeft} />
+        <TrialBanner
+          mode="ending"
+          daysLeft={trialDaysLeft}
+          onUpgrade={isClinicOwner ? () => setIsSubscriptionModalOpen(true) : undefined}
+        />
       )}
 
       {isDoctor && activeMainTab === 'operatory' && visiblePatients.length > 0 && treatPatient && (
@@ -1031,6 +1077,7 @@ export const WorkstationApp: React.FC = () => {
             onOpenBilling={handleOpenBilling}
             onOpenPrescription={handleOpenPrescription}
             walkInDisabled={!clinicWritable}
+            googleReviewUrl={branding.googleReviewUrl}
           />
           </>
         )}
@@ -1342,6 +1389,18 @@ export const WorkstationApp: React.FC = () => {
         initialSelection={currentDoctor}
         onClose={() => setIsAuthModalOpen(false)}
         onConfirm={handleConfirmSession}
+      />
+
+      <ClinicSubscriptionModal
+        isOpen={isSubscriptionModalOpen}
+        onClose={() => setIsSubscriptionModalOpen(false)}
+        clinicDbId={liveClinicId}
+        clinicName={branding.legalName}
+        doctorName={currentDoctor.doctor.displayName}
+        clinicEmail="doctor@aurasmile.clinic"
+        clinicPhone={branding.phone}
+        entitlement={clinicEntitlement}
+        onPlanActivated={handlePlanActivated}
       />
     </div>
   );

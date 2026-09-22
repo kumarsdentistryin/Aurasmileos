@@ -27,7 +27,8 @@ export type OpsSubTab =
   | 'staff'
   | 'whatsapp'
   | 'dues'
-  | 'profit';
+  | 'profit'
+  | 'subscription';
 
 interface NavbarProps {
   activeMainTab: MainWorkspaceTab;
@@ -45,6 +46,10 @@ interface NavbarProps {
   labelMockAsDemo?: boolean;
   /** Demo sandbox — institutional badge in nav (not yellow flashbang strip) */
   isDemo?: boolean;
+  /** In-app subscription plan & trial status */
+  entitlement?: import('../../lib/entitlements').ClinicEntitlement;
+  /** Callback to trigger Razorpay / UPI subscription modal */
+  onOpenSubscription?: () => void;
 }
 
 const ALL_PRIMARY_TABS: {
@@ -86,6 +91,7 @@ const OPS_SUB_TABS: { id: OpsSubTab; label: string; mock?: boolean }[] = [
   { id: 'profit', label: 'Estimator', mock: false },
   { id: 'branding', label: 'Branding' },
   { id: 'staff', label: 'Staff' },
+  { id: 'subscription', label: 'Plan & Billing' },
 ];
 
 /**
@@ -105,6 +111,8 @@ export const Navbar: React.FC<NavbarProps> = ({
   onLogout,
   labelMockAsDemo = false,
   isDemo = false,
+  entitlement,
+  onOpenSubscription,
 }) => {
   const role = session.doctor.role;
   const isOwnerDoctor =
@@ -125,6 +133,16 @@ export const Navbar: React.FC<NavbarProps> = ({
     branding.legalName;
   const doctorShort = session.doctor.displayName.replace(/,.*$/, '').trim();
   const isDesk = role === 'FRONT_DESK';
+
+  // Format subscription pill label
+  const isTrial = entitlement?.subscriptionStatus === 'trialing';
+  const planLabel = entitlement?.plan === 'ai_voice' 
+    ? 'AI Voice Plan' 
+    : entitlement?.plan === 'growth' 
+      ? 'Growth Plan' 
+      : entitlement?.plan === 'starter' || (entitlement?.plan as string) === 'core'
+        ? 'Core Plan' 
+        : 'Active Plan';
 
   return (
     <header className="sticky top-0 z-50 bg-[var(--color-surface)] border-b border-slate-200 text-slate-900 shadow-sm">
@@ -183,6 +201,23 @@ export const Navbar: React.FC<NavbarProps> = ({
               </Link>
             </div>
           )}
+
+          {onOpenSubscription && (
+            <button
+              type="button"
+              onClick={onOpenSubscription}
+              className={`tactile-btn hidden md:inline-flex items-center gap-1.5 h-9 px-2.5 rounded-lg text-xs font-semibold border motion-colors ${
+                isTrial
+                  ? 'bg-amber-50 text-amber-800 border-amber-200 hover:bg-amber-100'
+                  : 'bg-teal-50 text-teal-800 border-teal-200 hover:bg-teal-100'
+              }`}
+              title="Manage Clinic Subscription & Billing"
+            >
+              <span className={`w-2 h-2 rounded-full ${isTrial ? 'bg-amber-500 animate-pulse' : 'bg-teal-600'}`} />
+              <span>{isTrial ? 'Free Trial · Upgrade' : planLabel}</span>
+            </button>
+          )}
+
           <button
             type="button"
             onClick={onOpenSwitcher}

@@ -11,6 +11,7 @@ import {
   Stethoscope,
   X,
   Pill,
+  Star,
 } from 'lucide-react';
 import { formatPaiseToInr } from '../../domain/financials';
 import { WhatsAppIcon } from '../icons/WhatsAppIcon';
@@ -223,6 +224,19 @@ export interface AuraSmileHomeDashboardProps {
   onOpenPrescription?: (patientId: string) => void;
   /** Soft-lock — hide/disable walk-in create when pilot expired */
   walkInDisabled?: boolean;
+  /** Google My Business review URL for 1-tap review requests */
+  googleReviewUrl?: string;
+}
+
+function buildGmbReviewWhatsApp(
+  patientName: string,
+  doctorName: string,
+  clinicBrandName: string,
+  googleReviewUrl?: string
+): string {
+  const first = patientName.split(/\s+/)[0] ?? patientName;
+  const link = googleReviewUrl || 'https://maps.google.com';
+  return `Namaste ${first} ji,\n\nThank you for visiting ${clinicBrandName} today! If Dr. ${doctorName} and our team took gentle care of your smile, could you please take 10 seconds to share your review on Google? It means the world to our doctors:\n\n⭐ ${link}\n\n— Care Team, ${clinicBrandName}`;
 }
 
 function buildStatusWhatsApp(
@@ -276,6 +290,7 @@ export const AuraSmileHomeDashboard: React.FC<AuraSmileHomeDashboardProps> = ({
   onOpenBilling,
   onOpenPrescription,
   walkInDisabled = false,
+  googleReviewUrl,
 }) => {
   const [localQueue, setLocalQueue] = useState<HomeQueueAppointment[]>(INITIAL_QUEUE);
   const queue = appointments ?? localQueue;
@@ -1088,6 +1103,24 @@ export const AuraSmileHomeDashboard: React.FC<AuraSmileHomeDashboardProps> = ({
                               Rx
                             </button>
                           )}
+                          <a
+                            href={waUrl(
+                              appt.phone,
+                              buildGmbReviewWhatsApp(
+                                appt.patientName,
+                                appt.assignedDoctor,
+                                clinicBrandName,
+                                googleReviewUrl
+                              )
+                            )}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="tactile-btn inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1.5 rounded-md border border-amber-300 bg-amber-50 text-amber-900 hover:bg-amber-100 transition-colors"
+                            title="Send 5-Star Google Review request on WhatsApp"
+                          >
+                            <Star className="w-3.5 h-3.5 text-amber-500 fill-amber-400" />
+                            Review
+                          </a>
                         </div>
                       )}
 

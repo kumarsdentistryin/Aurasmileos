@@ -12,6 +12,7 @@ export type ClinicBrandingDraft = {
   cityLine: string;
   registrationFooter: string;
   logoDataUrl: string;
+  googleReviewUrl?: string;
 };
 
 function readLocalMap(): Record<string, ClinicBranding> {
@@ -46,6 +47,7 @@ export function dbClinicToBranding(clinic: DbClinic, fallbackBranchId: string): 
     cityLine: clinic.city_line || base.cityLine,
     logoDataUrl: clinic.logo_url || base.logoDataUrl,
     registrationFooter: clinic.registration_footer || base.registrationFooter,
+    googleReviewUrl: (clinic as any).google_review_url || base.googleReviewUrl,
   };
 }
 

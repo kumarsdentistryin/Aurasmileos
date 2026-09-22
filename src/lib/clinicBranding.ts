@@ -14,6 +14,8 @@ export interface ClinicBranding {
   /** Inline SVG or PNG data URL for Rx / Consent letterhead */
   logoDataUrl: string;
   registrationFooter: string;
+  /** Google My Business review link (e.g. https://g.page/r/.../review) */
+  googleReviewUrl?: string;
 }
 
 /** Default AuraSmile letterhead — matches BrandMark (tooth + clinical pulse). */

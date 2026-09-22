@@ -29,6 +29,7 @@ export const ClinicBrandingSettings: React.FC<ClinicBrandingSettingsProps> = ({
     cityLine: branding.cityLine,
     registrationFooter: branding.registrationFooter,
     logoDataUrl: branding.logoDataUrl,
+    googleReviewUrl: branding.googleReviewUrl || '',
   });
   const [busy, setBusy] = useState(false);
   const [status, setStatus] = useState<string | null>(null);
@@ -43,6 +44,7 @@ export const ClinicBrandingSettings: React.FC<ClinicBrandingSettingsProps> = ({
       cityLine: branding.cityLine,
       registrationFooter: branding.registrationFooter,
       logoDataUrl: branding.logoDataUrl,
+      googleReviewUrl: branding.googleReviewUrl || '',
     });
   }, [branding]);
 
@@ -99,6 +101,7 @@ export const ClinicBrandingSettings: React.FC<ClinicBrandingSettingsProps> = ({
       cityLine: draft.cityLine.trim(),
       logoDataUrl: draft.logoDataUrl,
       registrationFooter: draft.registrationFooter.trim(),
+      googleReviewUrl: draft.googleReviewUrl?.trim() || undefined,
     };
 
     try {
@@ -214,6 +217,20 @@ export const ClinicBrandingSettings: React.FC<ClinicBrandingSettingsProps> = ({
               className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm"
               placeholder="Clinic Reg · GSTIN"
             />
+          </label>
+          <label className="text-[11px] text-slate-600 space-y-1 sm:col-span-2">
+            <span className="flex items-center gap-1.5 font-bold text-slate-800">
+              <span className="text-amber-500">★</span> Google My Business (GMB) Review Link
+            </span>
+            <input
+              value={draft.googleReviewUrl || ''}
+              onChange={(e) => setField('googleReviewUrl', e.target.value)}
+              className="w-full rounded-md border border-amber-300 bg-amber-50/30 px-3 py-2 text-sm focus:border-amber-500 focus:outline-none"
+              placeholder="e.g. https://g.page/r/YOUR_CLINIC_ID/review or https://maps.app.goo.gl/..."
+            />
+            <span className="block text-[11px] text-slate-500">
+              Enables 1-tap WhatsApp 5-star review collection upon patient checkout to boost your clinic's Google Maps ranking.
+            </span>
           </label>
         </div>
 

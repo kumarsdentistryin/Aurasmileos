@@ -5,8 +5,9 @@
 
 import type { DbClinic } from './supabase';
 
-export type ClinicPlan = 'free_trial' | 'starter' | 'pro';
+export type ClinicPlan = 'free_trial' | 'starter' | 'growth' | 'ai_voice' | 'pro';
 export type SubscriptionStatus = 'trialing' | 'active' | 'past_due' | 'expired';
+export type ClinicSubscriptionStatus = SubscriptionStatus;
 
 export interface ClinicEntitlement {
   plan: ClinicPlan;
@@ -28,10 +29,19 @@ export function clinicToEntitlement(
   clinic: Pick<DbClinic, 'plan' | 'subscription_status' | 'trial_ends_at'> | null | undefined
 ): ClinicEntitlement {
   if (!clinic) return { ...OPEN_TRIAL_ENTITLEMENT };
-  const plan = clinic.plan;
+  const rawPlan = clinic.plan;
   const status = clinic.subscription_status;
+  const plan: ClinicPlan =
+    rawPlan === 'starter' ||
+    rawPlan === 'growth' ||
+    rawPlan === 'ai_voice' ||
+    rawPlan === 'pro' ||
+    rawPlan === 'free_trial'
+      ? rawPlan
+      : 'free_trial';
+
   return {
-    plan: plan === 'starter' || plan === 'pro' || plan === 'free_trial' ? plan : 'free_trial',
+    plan,
     subscriptionStatus:
       status === 'active' ||
       status === 'past_due' ||
@@ -76,4 +86,23 @@ export function clampChairCount(
   const max = maxChairsForPlan(plan);
   const n = Number.isFinite(requested) ? Math.floor(requested) : 3;
   return Math.min(max, Math.max(1, n));
+}
+
+/** Trial protection: Live AI Voice calls & outbound telephony are strictly locked unless clinic has paid active ai_voice plan */
+export function canAccessAIVoice(e: ClinicEntitlement): boolean {
+  return e.plan === 'ai_voice' && e.subscriptionStatus === 'active';
+}
+
+/** Growth features: Automated WhatsApp recall engine, GMB review booster, and patient re-engagement */
+export function canAccessGrowthEngine(e: ClinicEntitlement): boolean {
+  if (e.subscriptionStatus === 'active') {
+    return e.plan === 'growth' || e.plan === 'ai_voice' || e.plan === 'pro';
+  }
+  // During trial, clinics can test native GMB review links, but automated cloud engines require upgrade
+  return e.subscriptionStatus === 'trialing';
+}
+
+/** Core workstation: FDI odontogram, queues, materials auto-deduction, 60/40 splits, GST/UPI receipts */
+export function canAccessCoreWorkstation(e: ClinicEntitlement, now = new Date()): boolean {
+  return isClinicEntitled(e, now);
 }
