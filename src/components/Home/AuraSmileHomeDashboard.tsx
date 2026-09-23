@@ -342,8 +342,15 @@ export const AuraSmileHomeDashboard: React.FC<AuraSmileHomeDashboardProps> = ({
   }, [availableChairs]);
 
   const scopedQueue = useMemo(
-    () => filterQueueForViewer(queue, activeDoctorName, viewerRole, activeMemberId),
-    [queue, activeDoctorName, viewerRole, activeMemberId]
+    () =>
+      filterQueueForViewer(
+        queue,
+        activeDoctorName,
+        viewerRole,
+        activeMemberId,
+        isClinicOwner ? 'OWNER' : undefined
+      ),
+    [queue, activeDoctorName, viewerRole, activeMemberId, isClinicOwner]
   );
 
   const [walkIn, setWalkIn] = useState<WalkInPatientDraft>({
@@ -1040,8 +1047,8 @@ export const AuraSmileHomeDashboard: React.FC<AuraSmileHomeDashboardProps> = ({
             <DayChairCalendar
               appointments={scopedQueue}
               chairLabels={branchChairs.map((c) => c.label)}
-              filterDoctorName={isDesk ? null : activeDoctorName}
-              title={isDesk ? 'All doctors · shared chairs today' : 'Your chair schedule today'}
+              filterDoctorName={isDesk || isClinicOwner ? null : activeDoctorName}
+              title={isDesk || isClinicOwner ? 'All doctors · shared chairs today' : 'Your chair schedule today'}
             />
           ) : (
             <>

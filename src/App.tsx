@@ -1124,17 +1124,23 @@ export const WorkstationApp: React.FC = () => {
           />
         )}
 
-        {activeMainTab === 'crm' && isFrontDesk && !deskCollectPatient && (
+        {activeMainTab === 'crm' && (isFrontDesk || isClinicOwner) && !deskCollectPatient && (
           <PatientDirectory
             patients={visiblePatients}
             onSelectPatient={(p) => {
               setCurrentPatientId(p.id);
-              setActiveMainTab('home');
+              if (isDoctor) {
+                setActiveMainTab('operatory');
+                setActiveOperatorySubTab('odontogram');
+              } else {
+                setActiveMainTab('home');
+              }
             }}
             onCollectPatient={(p) => {
               setDeskCollectPatientId(p.id);
               setCurrentPatientId(p.id);
             }}
+            onAddPatient={() => setActiveMainTab('home')}
           />
         )}
 

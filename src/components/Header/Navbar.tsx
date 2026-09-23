@@ -63,7 +63,8 @@ const ALL_PRIMARY_TABS: {
   // Clinical charting is dentist-only (blueprint §21 / §17)
   { id: 'operatory', label: 'Treat', doctorLabel: 'Treat', roles: ['DOCTOR'] },
   // Live: real PatientDirectory; demo: DentalPipelineCRM behind same tab
-  { id: 'crm', label: 'Patients', doctorLabel: 'Patients', roles: ['FRONT_DESK'] },
+  // Desk and Owner doctors can view all Patients dossiers
+  { id: 'crm', label: 'Patients', doctorLabel: 'Patients', roles: ['FRONT_DESK', 'DOCTOR'] },
   // Clinic ops: desk + OWNER doctors (owner is often the treating dentist)
   { id: 'operations', label: 'Clinic', doctorLabel: 'Clinic', roles: ['FRONT_DESK', 'DOCTOR'] },
 ];

@@ -7,6 +7,8 @@ interface PatientDirectoryProps {
   onSelectPatient?: (patient: Patient) => void;
   /** Front desk opens Bill / Rx / Consent packet for collection */
   onCollectPatient?: (patient: Patient) => void;
+  /** Action to add a new walk-in / patient */
+  onAddPatient?: () => void;
 }
 
 /**
@@ -16,6 +18,7 @@ export const PatientDirectory: React.FC<PatientDirectoryProps> = ({
   patients,
   onSelectPatient,
   onCollectPatient,
+  onAddPatient,
 }) => {
   const [query, setQuery] = useState('');
   const [selectedFilter, setSelectedFilter] = useState<'ALL' | 'ACTIVE' | 'UPCOMING'>('ALL');
@@ -125,13 +128,29 @@ export const PatientDirectory: React.FC<PatientDirectoryProps> = ({
       </div>
 
       {filtered.length === 0 ? (
-        <div className="text-center text-xs text-slate-400 py-16 border border-dashed border-slate-200 rounded-xl bg-white space-y-2">
-          <UserRound className="h-8 w-8 mx-auto text-slate-300" />
-          <p>
-            {patients.length === 0
-              ? 'No patients registered yet. Add a new walk-in from the Today dashboard.'
-              : 'No matching records found for this query.'}
-          </p>
+        <div className="text-center text-xs text-slate-400 py-16 border border-dashed border-slate-200 rounded-xl bg-white space-y-3 px-4">
+          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-slate-50 text-slate-400 border border-slate-200">
+            <UserRound className="h-6 w-6" />
+          </div>
+          <div className="max-w-xs mx-auto">
+            <h4 className="text-sm font-bold text-slate-800">
+              {patients.length === 0 ? 'No patients registered yet' : 'No matching records found'}
+            </h4>
+            <p className="mt-1 text-xs text-slate-500">
+              {patients.length === 0
+                ? 'Your clinical directory is completely ready. Register your first walk-in or appointment to start charting and billing.'
+                : 'Try adjusting your search terms or filter selection.'}
+            </p>
+          </div>
+          {onAddPatient && (
+            <button
+              type="button"
+              onClick={onAddPatient}
+              className="tactile-btn inline-flex items-center gap-1.5 rounded-lg bg-teal-600 px-3.5 py-2 text-xs font-bold text-white hover:bg-teal-700 shadow-2xs transition-all"
+            >
+              + Register Walk-In / Patient
+            </button>
+          )}
         </div>
       ) : (
         <div className="overflow-hidden rounded-xl border border-slate-200/90 bg-white shadow-xs">
