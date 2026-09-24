@@ -17,7 +17,7 @@ import {
   type PostCareLocale,
   type RxBundleId,
 } from '../../domain/rxBundles';
-import { Pill, Plus, Trash2, Printer, ShieldAlert, CheckCircle2, ExternalLink, Save } from 'lucide-react';
+import { Pill, Plus, Trash2, Printer, ShieldAlert, CheckCircle2, ExternalLink, Save, Mic, MicOff, Sparkles } from 'lucide-react';
 import { PrintPreviewModal } from '../Print/PrintPreviewModal';
 import { ClinicBranding } from '../../lib/clinicBranding';
 import { QuickChip } from '../ui/QuickChip';
@@ -138,6 +138,108 @@ export const PrescriptionPad: React.FC<PrescriptionPadProps> = ({
     ]);
   };
 
+  // VoiceRx Chairside Prescription Dictation
+  const [isVoiceRxListening, setIsVoiceRxListening] = useState(false);
+  const [voiceRxFeedback, setVoiceRxFeedback] = useState<string | null>(null);
+
+  const startVoiceRxDictation = () => {
+    const SpeechRecognition =
+      (window as unknown as { SpeechRecognition?: any; webkitSpeechRecognition?: any })
+        .SpeechRecognition ||
+      (window as unknown as { SpeechRecognition?: any; webkitSpeechRecognition?: any })
+        .webkitSpeechRecognition;
+
+    if (!SpeechRecognition) {
+      alert('Speech recognition is not supported in this browser. Please use Chrome or Edge.');
+      return;
+    }
+
+    try {
+      const recognition = new SpeechRecognition();
+      recognition.continuous = false;
+      recognition.interimResults = false;
+      recognition.lang = 'en-IN';
+
+      recognition.onstart = () => {
+        setIsVoiceRxListening(true);
+        setVoiceRxFeedback('Listening... Speak medicine name (e.g. "Augmentin 625 with Zerodol-SP for 5 days")');
+      };
+
+      recognition.onresult = (event: any) => {
+        const transcript = event.results[0][0].transcript;
+        setVoiceRxFeedback(`Transcribed: "${transcript}"`);
+        parseAndAddVoiceDrugs(transcript);
+      };
+
+      recognition.onerror = () => {
+        setIsVoiceRxListening(false);
+        setVoiceRxFeedback('Could not capture audio. Please try again.');
+      };
+
+      recognition.onend = () => {
+        setIsVoiceRxListening(false);
+      };
+
+      recognition.start();
+    } catch {
+      setIsVoiceRxListening(false);
+      setVoiceRxFeedback('Audio capture error.');
+    }
+  };
+
+  const parseAndAddVoiceDrugs = (spokenText: string) => {
+    const lower = spokenText.toLowerCase();
+    const matchedDrugs: (typeof INDIAN_DENTAL_DRUG_MASTER)[0][] = [];
+
+    for (const master of INDIAN_DENTAL_DRUG_MASTER) {
+      const brandWord = master.brandName.toLowerCase().split(/\s+/)[0];
+      const genericWord = master.genericName.toLowerCase().split(/\s+/)[0];
+      if (lower.includes(brandWord) || (genericWord.length > 4 && lower.includes(genericWord))) {
+        matchedDrugs.push(master);
+      }
+    }
+
+    if (matchedDrugs.length === 0) {
+      // Check for common synonyms
+      if (lower.includes('pain') || lower.includes('analgesic') || lower.includes('combiflam')) {
+        const d = INDIAN_DENTAL_DRUG_MASTER.find((m) => m.brandName.includes('Zerodol'));
+        if (d) matchedDrugs.push(d);
+      }
+      if (lower.includes('antibiotic') || lower.includes('amox') || lower.includes('augmentin')) {
+        const d = INDIAN_DENTAL_DRUG_MASTER.find((m) => m.brandName.includes('Moxikind'));
+        if (d) matchedDrugs.push(d);
+      }
+      if (lower.includes('mouthwash') || lower.includes('rinse')) {
+        const d = INDIAN_DENTAL_DRUG_MASTER.find((m) => m.brandName.includes('Hexidine'));
+        if (d) matchedDrugs.push(d);
+      }
+    }
+
+    if (matchedDrugs.length === 0) {
+      setVoiceRxFeedback(`Could not identify drug brand from: "${spokenText}". Try "Moxikind", "Zerodol-SP", or "Azee".`);
+      return;
+    }
+
+    let addedCount = 0;
+    matchedDrugs.forEach((d) => {
+      const result = interceptDrugAddition(
+        patient.medicalAlerts,
+        { ...d, durationDays: lower.includes('3 day') ? 3 : 5 },
+        drugs
+      );
+      if (result.allowed) {
+        setDrugs((prev) => [...prev, result.drug]);
+        addedCount++;
+      } else {
+        setIssueError(result.reason);
+      }
+    });
+
+    if (addedCount > 0) {
+      setVoiceRxFeedback(`Added ${addedCount} medicine(s) via VoiceRx AI.`);
+    }
+  };
+
   const handleOpenPreview = () => {
     try {
       assertPrescriptionSafeToIssue(patient.medicalAlerts, drugs);
@@ -227,6 +329,30 @@ export const PrescriptionPad: React.FC<PrescriptionPadProps> = ({
           </a>
           <button
             type="button"
+            onClick={startVoiceRxDictation}
+            disabled={isVoiceRxListening}
+            className={`tactile-btn flex items-center space-x-1.5 text-xs font-semibold px-3 py-1.5 rounded transition-all shadow-2xs ${
+              isVoiceRxListening
+                ? 'bg-rose-500 text-white animate-pulse'
+                : 'bg-gradient-to-r from-teal-600 to-emerald-600 text-white hover:opacity-95'
+            }`}
+            title="Speech-to-Prescription with Indian Dental Drug Master"
+          >
+            {isVoiceRxListening ? (
+              <>
+                <MicOff className="w-3.5 h-3.5" />
+                <span>Listening...</span>
+              </>
+            ) : (
+              <>
+                <Mic className="w-3.5 h-3.5" />
+                <Sparkles className="w-3.5 h-3.5 text-amber-200" />
+                <span>VoiceRx AI</span>
+              </>
+            )}
+          </button>
+          <button
+            type="button"
             onClick={handleSaveRx}
             disabled={allergyCheck.hasCriticalWarning || drugs.length === 0}
             className="tactile-btn flex items-center space-x-1.5 text-xs border border-slate-200 bg-white text-slate-700 font-semibold px-3 py-1.5 rounded hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed"
@@ -245,6 +371,22 @@ export const PrescriptionPad: React.FC<PrescriptionPadProps> = ({
           </button>
         </div>
       </div>
+
+      {voiceRxFeedback && (
+        <div className="flex items-center justify-between rounded-lg border border-teal-200 bg-teal-50 px-3.5 py-2 text-xs text-teal-900 shadow-2xs">
+          <div className="flex items-center gap-2">
+            <Sparkles className="h-4 w-4 text-teal-600 shrink-0" />
+            <span className="font-medium">{voiceRxFeedback}</span>
+          </div>
+          <button
+            type="button"
+            onClick={() => setVoiceRxFeedback(null)}
+            className="text-[11px] font-bold text-teal-700 hover:text-teal-900 ml-2"
+          >
+            Dismiss
+          </button>
+        </div>
+      )}
 
       {saveNote && (
         <div className="rounded-lg border border-teal-200 bg-teal-50 px-3 py-2 text-xs font-medium text-teal-900">

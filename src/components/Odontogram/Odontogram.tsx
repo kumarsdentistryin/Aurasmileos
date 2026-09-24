@@ -15,7 +15,7 @@ import {
 } from '../../domain/fdi';
 import { ToothSvg } from './ToothSvg';
 import { ConditionPalette } from './ConditionPalette';
-import { CheckCircle2, RotateCcw, AlertCircle } from 'lucide-react';
+import { CheckCircle2, RotateCcw, AlertCircle, Mic, MicOff, Sparkles } from 'lucide-react';
 import { formatMacroLine, macrosForCondition } from '../../domain/clinicalChips';
 import { formatPaiseToInr } from '../../domain/financials';
 import { QuickChip } from '../ui/QuickChip';
@@ -154,6 +154,125 @@ export const Odontogram: React.FC<OdontogramProps> = ({
     });
   };
 
+  // Chairside Voice Scribe (VoiceRx++ for Dentists)
+  const [isListening, setIsListening] = useState(false);
+  const [voiceTranscript, setVoiceTranscript] = useState<string | null>(null);
+
+  const startVoiceDictation = () => {
+    const SpeechRecognition =
+      (window as unknown as { SpeechRecognition?: any; webkitSpeechRecognition?: any })
+        .SpeechRecognition ||
+      (window as unknown as { SpeechRecognition?: any; webkitSpeechRecognition?: any })
+        .webkitSpeechRecognition;
+
+    if (!SpeechRecognition) {
+      alert('Speech recognition is not supported in this browser. Please use Google Chrome or Edge.');
+      return;
+    }
+
+    try {
+      const recognition = new SpeechRecognition();
+      recognition.continuous = false;
+      recognition.interimResults = false;
+      recognition.lang = 'en-IN'; // Optimized for Indian clinical English
+
+      recognition.onstart = () => {
+        setIsListening(true);
+        setVoiceTranscript('Listening... Speak tooth number and finding (e.g. "Tooth 16 deep caries plan RCT")');
+      };
+
+      recognition.onresult = (event: any) => {
+        const transcript = event.results[0][0].transcript;
+        setVoiceTranscript(`Recognized: "${transcript}"`);
+        parseAndApplyVoiceCommand(transcript);
+      };
+
+      recognition.onerror = () => {
+        setIsListening(false);
+        setVoiceTranscript('Could not capture audio. Please try again.');
+      };
+
+      recognition.onend = () => {
+        setIsListening(false);
+      };
+
+      recognition.start();
+    } catch {
+      setIsListening(false);
+      setVoiceTranscript('Voice access error.');
+    }
+  };
+
+  const parseAndApplyVoiceCommand = (text: string) => {
+    const lower = text.toLowerCase();
+    
+    // 1. Detect FDI tooth number (11-48, 51-85)
+    const toothMatch = lower.match(/(?:tooth\s*)?(\b[1-4][1-8]\b|\b[5-8][1-5]\b)/);
+    const targetTooth = toothMatch ? (parseInt(toothMatch[1], 10) as ToothId) : selectedToothId;
+    
+    if (toothMatch) {
+      setSelectedToothId(targetTooth);
+    }
+
+    // 2. Detect clinical condition & treatment intent
+    let condition: ToothCondition | null = null;
+    let treatment = '';
+    let notes = text;
+
+    if (lower.includes('caries') || lower.includes('cavity') || lower.includes('decay')) {
+      condition = 'CARIES';
+      if (lower.includes('rct') || lower.includes('root canal')) {
+        treatment = 'Root Canal Treatment (RCT) + Crown';
+      } else {
+        treatment = 'Composite Restoration';
+      }
+    } else if (lower.includes('rct') || lower.includes('root canal') || lower.includes('pulpitis')) {
+      condition = 'RCT';
+      treatment = 'Single-visit Endodontics + Monolithic Zirconia Crown';
+    } else if (lower.includes('crown') || lower.includes('cap')) {
+      condition = 'CROWN';
+      treatment = 'Zirconia / E.max Crown';
+    } else if (lower.includes('missing')) {
+      condition = 'MISSING';
+      treatment = 'Implant / Fixed Partial Denture (FPD)';
+    } else if (lower.includes('extract') || lower.includes('removal')) {
+      condition = 'EXTRACTION_INDICATED';
+      treatment = 'Therapeutic Extraction';
+    } else if (lower.includes('sound') || lower.includes('normal') || lower.includes('intact')) {
+      condition = 'SOUND';
+      treatment = '';
+      notes = 'Sound tooth, intact margins.';
+    }
+
+    // 3. Detect Surfaces (mesial, distal, occlusal, buccal, lingual)
+    const detectedSurfaces: ToothSurface[] = [];
+    if (lower.includes('mesial')) detectedSurfaces.push('M');
+    if (lower.includes('distal')) detectedSurfaces.push('D');
+    if (lower.includes('occlusal') || lower.includes('incisal')) detectedSurfaces.push('O');
+    if (lower.includes('buccal') || lower.includes('facial') || lower.includes('labial')) detectedSurfaces.push('B');
+    if (lower.includes('lingual') || lower.includes('palatal')) detectedSurfaces.push('L');
+
+    const toothState = dentalChart[targetTooth] || {
+      toothId: targetTooth,
+      condition: 'SOUND',
+      affectedSurfaces: [],
+      lastUpdated: new Date().toISOString().split('T')[0],
+    };
+
+    onUpdateToothState(targetTooth, {
+      ...toothState,
+      condition: condition ?? toothState.condition,
+      affectedSurfaces: detectedSurfaces.length > 0 ? detectedSurfaces : toothState.affectedSurfaces,
+      treatmentPlanned: treatment || toothState.treatmentPlanned,
+      notes: notes || toothState.notes,
+      lastUpdated: new Date().toISOString().split('T')[0],
+    });
+
+    if (condition) {
+      setActiveCondition(condition);
+    }
+  };
+
   // Clinical Summary Totals
   const chartValues = Object.values(dentalChart);
   const cariesCount = chartValues.filter((t) => t.condition === 'CARIES').length;
@@ -246,8 +365,48 @@ export const Odontogram: React.FC<OdontogramProps> = ({
               </button>
             </div>
           )}
+          <button
+            type="button"
+            onClick={startVoiceDictation}
+            disabled={readOnly || isListening}
+            className={`tactile-btn inline-flex min-h-[36px] items-center gap-1.5 rounded-lg px-3 text-xs font-bold transition-all shadow-2xs ${
+              isListening
+                ? 'bg-rose-500 text-white animate-pulse'
+                : 'bg-gradient-to-r from-teal-600 to-emerald-600 text-white hover:opacity-95'
+            }`}
+            title="Hands-free chairside dental dictation"
+          >
+            {isListening ? (
+              <>
+                <MicOff className="h-3.5 w-3.5" />
+                <span>Listening...</span>
+              </>
+            ) : (
+              <>
+                <Mic className="h-3.5 w-3.5" />
+                <Sparkles className="h-3.5 w-3.5 text-amber-200" />
+                <span>Voice Scribe</span>
+              </>
+            )}
+          </button>
         </div>
       </div>
+
+      {voiceTranscript && (
+        <div className="flex items-center justify-between rounded-lg border border-teal-200 bg-teal-50 px-3.5 py-2 text-xs text-teal-900 shadow-2xs">
+          <div className="flex items-center gap-2">
+            <Sparkles className="h-4 w-4 text-teal-600 shrink-0" />
+            <span className="font-medium">{voiceTranscript}</span>
+          </div>
+          <button
+            type="button"
+            onClick={() => setVoiceTranscript(null)}
+            className="text-[11px] font-bold text-teal-700 hover:text-teal-900 ml-2"
+          >
+            Dismiss
+          </button>
+        </div>
+      )}
 
       {/* Condition Palette */}
       <ConditionPalette
