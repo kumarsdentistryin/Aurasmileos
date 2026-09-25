@@ -32,7 +32,7 @@ export const PatientBanner: React.FC<PatientBannerProps> = ({
 
   return (
     <div
-      className={`sticky top-[88px] z-40 border-b bg-[var(--color-surface)]/95 backdrop-blur-sm ${
+      className={`border-b bg-[var(--color-surface)] shadow-2xs ${
         hasCritical ? 'border-b-2 border-[var(--alert-danger-border)]' : 'border-slate-200/90'
       }`}
     >
