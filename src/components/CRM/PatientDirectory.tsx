@@ -21,12 +21,14 @@ export const PatientDirectory: React.FC<PatientDirectoryProps> = ({
   onAddPatient,
 }) => {
   const [query, setQuery] = useState('');
-  const [selectedFilter, setSelectedFilter] = useState<'ALL' | 'ACTIVE' | 'UPCOMING'>('ALL');
+  const [selectedFilter, setSelectedFilter] = useState<'ALL' | 'ACTIVE' | 'UPCOMING' | 'ALERT'>('ALL');
 
   const filtered = useMemo(() => {
     let list = patients;
     if (selectedFilter === 'UPCOMING') {
       list = list.filter((p) => Boolean(p.nextAppointmentDate));
+    } else if (selectedFilter === 'ALERT') {
+      list = list.filter((p) => p.medicalAlerts && p.medicalAlerts.length > 0);
     }
     const q = query.trim().toLowerCase();
     if (!q) return list;
@@ -110,6 +112,17 @@ export const PatientDirectory: React.FC<PatientDirectoryProps> = ({
               }`}
             >
               Recalls Due
+            </button>
+            <button
+              type="button"
+              onClick={() => setSelectedFilter('ALERT')}
+              className={`rounded-md px-2.5 py-1 text-xs font-bold transition-all ${
+                selectedFilter === 'ALERT'
+                  ? 'bg-white text-rose-700 shadow-2xs'
+                  : 'text-slate-600 hover:text-rose-700'
+              }`}
+            >
+              Med Alerts ({patients.filter((p) => p.medicalAlerts && p.medicalAlerts.length > 0).length})
             </button>
           </div>
 
