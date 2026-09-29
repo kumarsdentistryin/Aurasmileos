@@ -371,8 +371,8 @@ export const Odontogram: React.FC<OdontogramProps> = ({
             disabled={readOnly || isListening}
             className={`tactile-btn inline-flex min-h-[36px] items-center gap-1.5 rounded-lg px-3 text-xs font-bold transition-all shadow-2xs ${
               isListening
-                ? 'bg-rose-500 text-white animate-pulse'
-                : 'bg-gradient-to-r from-teal-600 to-emerald-600 text-white hover:opacity-95'
+                ? 'bg-rose-600 text-white animate-pulse'
+                : 'bg-[var(--color-brand)] text-white hover:bg-[var(--color-brand-hover)]'
             }`}
             title="Hands-free chairside dental dictation"
           >
@@ -383,8 +383,7 @@ export const Odontogram: React.FC<OdontogramProps> = ({
               </>
             ) : (
               <>
-                <Mic className="h-3.5 w-3.5" />
-                <Sparkles className="h-3.5 w-3.5 text-amber-200" />
+                <Mic className="h-3.5 w-3.5 text-teal-200" />
                 <span>Voice Scribe</span>
               </>
             )}

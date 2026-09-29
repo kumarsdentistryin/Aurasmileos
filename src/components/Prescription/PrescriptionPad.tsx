@@ -333,8 +333,8 @@ export const PrescriptionPad: React.FC<PrescriptionPadProps> = ({
             disabled={isVoiceRxListening}
             className={`tactile-btn flex items-center space-x-1.5 text-xs font-semibold px-3 py-1.5 rounded transition-all shadow-2xs ${
               isVoiceRxListening
-                ? 'bg-rose-500 text-white animate-pulse'
-                : 'bg-gradient-to-r from-teal-600 to-emerald-600 text-white hover:opacity-95'
+                ? 'bg-rose-600 text-white animate-pulse'
+                : 'bg-[var(--color-brand)] text-white hover:bg-[var(--color-brand-hover)]'
             }`}
             title="Speech-to-Prescription with Indian Dental Drug Master"
           >
@@ -345,8 +345,7 @@ export const PrescriptionPad: React.FC<PrescriptionPadProps> = ({
               </>
             ) : (
               <>
-                <Mic className="w-3.5 h-3.5" />
-                <Sparkles className="w-3.5 h-3.5 text-amber-200" />
+                <Mic className="w-3.5 h-3.5 text-teal-200" />
                 <span>VoiceRx AI</span>
               </>
             )}

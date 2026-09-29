@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import {
   DentalMaterial,
+  MaterialCategory,
   isExpiringSoon,
   isLowStock,
   deductCaseMaterials,
@@ -21,7 +22,7 @@ import {
   saveInventoryStock,
   setInventoryClinicScope,
 } from '../../lib/inventoryPersistence';
-import { Package, AlertTriangle, ArrowDownRight, RefreshCw, ShieldAlert, Layers, ShoppingCart, Trash2 } from 'lucide-react';
+import { Package, AlertTriangle, ArrowDownRight, RefreshCw, ShieldAlert, Layers, ShoppingCart, Trash2, Plus, X } from 'lucide-react';
 
 interface InventoryManagerProps {
   clinicDbId?: string | null;
@@ -47,6 +48,18 @@ export const InventoryManager: React.FC<InventoryManagerProps> = ({ clinicDbId =
   const [filterCategory, setFilterCategory] = useState<string>('ALL');
   const [buySku, setBuySku] = useState('');
   const [buyQty, setBuyQty] = useState(10);
+
+  // New Custom SKU modal state
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [newSku, setNewSku] = useState('');
+  const [newName, setNewName] = useState('');
+  const [newCategory, setNewCategory] = useState<MaterialCategory>('RESTORATIVE');
+  const [newManufacturer, setNewManufacturer] = useState('');
+  const [newBatch, setNewBatch] = useState('');
+  const [newExpiry, setNewExpiry] = useState('');
+  const [newUnitCostInr, setNewUnitCostInr] = useState(100);
+  const [newInitialStock, setNewInitialStock] = useState(10);
+  const [newReorderThreshold, setNewReorderThreshold] = useState(5);
 
   useEffect(() => {
     hydrate();
@@ -101,6 +114,49 @@ export const InventoryManager: React.FC<InventoryManagerProps> = ({ clinicDbId =
       setLastDeductedProcedure(null);
       setAutoDeductions([]);
     }
+  };
+
+  const handleAddNewMaterial = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newName.trim() || !newSku.trim()) {
+      alert('Please provide at least a material name and unique SKU code.');
+      return;
+    }
+
+    const trimmedSku = newSku.trim().toUpperCase();
+    if (materials.some((m) => m.sku === trimmedSku)) {
+      alert(`SKU "${trimmedSku}" already exists. Please choose a unique SKU.`);
+      return;
+    }
+
+    const createdItem: DentalMaterial = {
+      id: `mat-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+      sku: trimmedSku,
+      name: newName.trim(),
+      category: newCategory,
+      manufacturer: newManufacturer.trim() || 'Standard Medical',
+      batchNumber: newBatch.trim() || `B-${new Date().getFullYear()}`,
+      expiryDate: newExpiry || new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+      unitCostPaise: Math.round(newUnitCostInr * 100),
+      currentStock: Number(newInitialStock) || 0,
+      reorderThreshold: Number(newReorderThreshold) || 5,
+      packageUnit: 'units',
+    };
+
+    const next = [createdItem, ...materials];
+    persistStock(next);
+    if (!buySku) setBuySku(createdItem.sku);
+
+    // Reset modal form
+    setNewSku('');
+    setNewName('');
+    setNewManufacturer('');
+    setNewBatch('');
+    setNewExpiry('');
+    setNewUnitCostInr(100);
+    setNewInitialStock(10);
+    setNewReorderThreshold(5);
+    setShowAddModal(false);
   };
 
   const filtered =
@@ -163,6 +219,15 @@ export const InventoryManager: React.FC<InventoryManagerProps> = ({ clinicDbId =
         </div>
 
         <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setShowAddModal(true)}
+            className="tactile-btn flex items-center space-x-1.5 rounded bg-[var(--color-brand)] px-3 py-1.5 text-xs font-bold text-white hover:bg-[var(--color-brand-hover)]"
+            title="Register a new custom SKU"
+          >
+            <Plus className="h-3.5 w-3.5" />
+            <span>Add Item</span>
+          </button>
           <button
             type="button"
             onClick={handleClearAllStock}
@@ -429,6 +494,7 @@ export const InventoryManager: React.FC<InventoryManagerProps> = ({ clinicDbId =
                 <th className="p-2.5 text-right">Unit cost</th>
                 <th className="p-2.5 text-center">Stock</th>
                 <th className="p-2.5 text-center">Status</th>
+                <th className="p-2.5 text-center w-12">Action</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-200">
@@ -473,6 +539,20 @@ export const InventoryManager: React.FC<InventoryManagerProps> = ({ clinicDbId =
                         </span>
                       )}
                     </td>
+                    <td className="p-2.5 text-center">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (confirm(`Remove "${m.name}" (${m.sku}) from stock?`)) {
+                            persistStock(materials.filter((item) => item.id !== m.id));
+                          }
+                        }}
+                        className="tactile-btn rounded p-1 text-slate-400 hover:bg-rose-50 hover:text-rose-600"
+                        title="Delete this SKU"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    </td>
                   </tr>
                 );
               })}
@@ -507,6 +587,155 @@ export const InventoryManager: React.FC<InventoryManagerProps> = ({ clinicDbId =
         </div>
       )}
       </>
+      )}
+
+      {/* Add Custom SKU Modal */}
+      {showAddModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-xs p-4">
+          <div className="surface-card w-full max-w-md p-5 shadow-xl animate-[workspaceIn_150ms_ease-out]">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div className="flex items-center space-x-2">
+                <div className="flex h-7 w-7 items-center justify-center rounded bg-teal-50 text-[var(--color-brand)]">
+                  <Plus className="h-4 w-4" />
+                </div>
+                <h3 className="text-sm font-bold text-slate-900">Add Clinic Material / SKU</h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowAddModal(false)}
+                className="tactile-btn rounded p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleAddNewMaterial} className="mt-4 space-y-3">
+              <div>
+                <label className="block text-[11px] font-semibold text-slate-700">Material Name *</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. 3M ESPE RelyX Luting Cement"
+                  value={newName}
+                  onChange={(e) => setNewName(e.target.value)}
+                  className="mt-1 w-full rounded border border-slate-200 px-2.5 py-1.5 text-xs focus:border-[var(--color-brand)] focus:outline-none"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="block text-[11px] font-semibold text-slate-700">SKU Code *</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. CEM-RELYX-01"
+                    value={newSku}
+                    onChange={(e) => setNewSku(e.target.value.toUpperCase())}
+                    className="mt-1 w-full font-mono rounded border border-slate-200 px-2.5 py-1.5 text-xs focus:border-[var(--color-brand)] focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[11px] font-semibold text-slate-700">Category</label>
+                  <select
+                    value={newCategory}
+                    onChange={(e) => setNewCategory(e.target.value as MaterialCategory)}
+                    className="mt-1 w-full rounded border border-slate-200 bg-white px-2 py-1.5 text-xs focus:border-[var(--color-brand)] focus:outline-none"
+                  >
+                    <option value="RESTORATIVE">Restorative</option>
+                    <option value="ENDODONTICS">Endodontics</option>
+                    <option value="LOCAL_ANESTHESIA">Local Anesthesia</option>
+                    <option value="SURGERY">Surgery</option>
+                    <option value="PROSTHODONTICS">Prosthodontics</option>
+                    <option value="PREVENTIVE">Preventive</option>
+                    <option value="STERILIZATION">Sterilization</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="block text-[11px] font-semibold text-slate-700">Manufacturer</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. 3M ESPE, Dentsply"
+                    value={newManufacturer}
+                    onChange={(e) => setNewManufacturer(e.target.value)}
+                    className="mt-1 w-full rounded border border-slate-200 px-2.5 py-1.5 text-xs focus:border-[var(--color-brand)] focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[11px] font-semibold text-slate-700">Batch Number</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. B-2026-90"
+                    value={newBatch}
+                    onChange={(e) => setNewBatch(e.target.value)}
+                    className="mt-1 w-full font-mono rounded border border-slate-200 px-2.5 py-1.5 text-xs focus:border-[var(--color-brand)] focus:outline-none"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-3 gap-2">
+                <div>
+                  <label className="block text-[11px] font-semibold text-slate-700">Unit Cost (₹)</label>
+                  <input
+                    type="number"
+                    min={1}
+                    value={newUnitCostInr}
+                    onChange={(e) => setNewUnitCostInr(Math.max(1, Number(e.target.value) || 1))}
+                    className="mt-1 w-full font-mono rounded border border-slate-200 px-2 py-1.5 text-xs focus:border-[var(--color-brand)] focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[11px] font-semibold text-slate-700">Initial Qty</label>
+                  <input
+                    type="number"
+                    min={0}
+                    value={newInitialStock}
+                    onChange={(e) => setNewInitialStock(Math.max(0, Number(e.target.value) || 0))}
+                    className="mt-1 w-full font-mono rounded border border-slate-200 px-2 py-1.5 text-xs focus:border-[var(--color-brand)] focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[11px] font-semibold text-slate-700">Reorder Alert</label>
+                  <input
+                    type="number"
+                    min={1}
+                    value={newReorderThreshold}
+                    onChange={(e) => setNewReorderThreshold(Math.max(1, Number(e.target.value) || 1))}
+                    className="mt-1 w-full font-mono rounded border border-slate-200 px-2 py-1.5 text-xs focus:border-[var(--color-brand)] focus:outline-none"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-semibold text-slate-700">Expiry Date</label>
+                <input
+                  type="date"
+                  value={newExpiry}
+                  onChange={(e) => setNewExpiry(e.target.value)}
+                  className="mt-1 w-full font-mono rounded border border-slate-200 px-2.5 py-1.5 text-xs focus:border-[var(--color-brand)] focus:outline-none"
+                />
+              </div>
+
+              <div className="flex items-center justify-end space-x-2 pt-3 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setShowAddModal(false)}
+                  className="tactile-btn rounded border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="tactile-btn rounded bg-[var(--color-brand)] px-4 py-1.5 text-xs font-bold text-white hover:bg-[var(--color-brand-hover)]"
+                >
+                  Save Material
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
       )}
     </div>
   );
